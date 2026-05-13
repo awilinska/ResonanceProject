@@ -115,16 +115,16 @@ float GetCloudHeightFractionForPoint(float3 worldPos)
 	UNITY_BRANCH
 	if (_CloudPlanetRadiusVolumetric > 0.0)
 	{
-		return _CloudHeightInverseVolumetric * (distance(worldPos, volumetricPlanetCenter) - _CloudPlanetStartVolumetric);
+		return saturate(_CloudHeightInverseVolumetric * (distance(worldPos, volumetricPlanetCenter) - _CloudPlanetStartVolumetric));
 	}
 	else if (_WeatherMakerCloudVolumetricWeatherMapRemapBoxMin.w == 0.0)
 	{
-		return ((worldPos.y - _CloudStartVolumetric) * _CloudHeightInverseVolumetric);
+		return saturate(((worldPos.y - _CloudStartVolumetric) * _CloudHeightInverseVolumetric));
 	}
 	else
 	{
 		float heightPos = worldPos.y - _WeatherMakerCloudVolumetricWeatherMapRemapBoxMin.y;
-		return heightPos * _WeatherMakerCloudVolumetricWeatherMapRemapBoxMax.w;
+		return saturate(heightPos * _WeatherMakerCloudVolumetricWeatherMapRemapBoxMax.w);
 	}
 }
 

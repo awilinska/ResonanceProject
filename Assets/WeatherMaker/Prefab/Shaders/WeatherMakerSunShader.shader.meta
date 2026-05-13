@@ -7,10 +7,3 @@ ShaderImporter:
   userData: 
   assetBundleName: 
   assetBundleVariant: 
-AssetOrigin:
-  serializedVersion: 1
-  productId: 60955
-  packageName: Weather Maker - Volumetric Clouds and Weather System for Unity
-  packageVersion: 8.0.4
-  assetPath: Assets/WeatherMaker/Prefab/Shaders/WeatherMakerSunShader.shader
-  uploadId: 875042

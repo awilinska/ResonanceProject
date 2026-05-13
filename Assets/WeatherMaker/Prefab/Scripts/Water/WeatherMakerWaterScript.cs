@@ -332,7 +332,7 @@ namespace DigitalRuby.WeatherMaker
                     float depth = Mathf.Max(0.0f, transform.position.y - camera.transform.position.y);
                     float atten = (1.0f / (density * density * depth * depth));
                     atten = Mathf.Clamp(atten, 0.0f, 1.0f);
-                    WeatherMakerLightManagerScript.Instance.DirectionalLightIntensityMultipliers["WeatherMakerWaterScript" + GetInstanceID()] = atten;
+                    WeatherMakerLightManagerScript.Instance.DirectionalLightIntensityMultipliers["WeatherMakerWaterScript" + GetEntityId()] = atten;
                 }
             }
             else
@@ -353,7 +353,7 @@ namespace DigitalRuby.WeatherMaker
                     }
                     if (WeatherMakerLightManagerScript.Instance != null)
                     {
-                        WeatherMakerLightManagerScript.Instance.DirectionalLightIntensityMultipliers.Remove("WeatherMakerWaterScript" + GetInstanceID());
+                        WeatherMakerLightManagerScript.Instance.DirectionalLightIntensityMultipliers.Remove("WeatherMakerWaterScript" + GetEntityId());
                     }
 
                     // TODO: Deactivate any post processing volume

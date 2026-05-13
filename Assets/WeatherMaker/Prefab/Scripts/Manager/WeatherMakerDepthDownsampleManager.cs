@@ -28,7 +28,9 @@ namespace DigitalRuby.WeatherMaker
             public RenderTexture Half;
             public RenderTexture Quarter;
             public RenderTexture Eighth;
+#if !UNITY_URP
             public CommandBuffer CommandBuffer;
+#endif
         }
 
         private readonly WeatherMakerCommandBufferManagerScript owner;

@@ -704,7 +704,7 @@ namespace DigitalRuby.WeatherMaker
 #if UNITY_EDITOR
 
 #if UNITY_6000_0_OR_NEWER
-            if (GameObject.FindObjectsByType<WeatherMakerScript>(FindObjectsSortMode.None).Length > 1)
+            if (GameObject.FindObjectsByType<WeatherMakerScript>().Length > 1)
 #else
             if (GameObject.FindObjectsOfType<WeatherMakerScript>().Length > 1)
 #endif
@@ -1192,7 +1192,7 @@ namespace DigitalRuby.WeatherMaker
                 !StringContainsAny(StackTraceUtility.ExtractStackTrace(), "OnDestroy", "OnDisable"))
             {
 #if UNITY_6000_0_OR_NEWER
-                var scripts = GameObject.FindObjectsByType<T>(FindObjectsSortMode.None);
+                var scripts = GameObject.FindObjectsByType<T>();
 #else
                 var scripts = GameObject.FindObjectsOfType<T>();
 #endif

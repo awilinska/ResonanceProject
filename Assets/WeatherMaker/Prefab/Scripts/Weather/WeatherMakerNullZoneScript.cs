@@ -75,7 +75,7 @@ namespace DigitalRuby.WeatherMaker
         /// <param name="duration">Duration</param>
         public void SetStrengthAnimated(float newStrength, float duration)
         {
-            TweenFactory.Tween("WeatherMakerZullZoneScript_" + GetInstanceID(), NullZoneStrength, Mathf.Clamp(newStrength, 0.0f, 1.0f),
+            TweenFactory.Tween("WeatherMakerZullZoneScript_" + GetEntityId(), NullZoneStrength, Mathf.Clamp(newStrength, 0.0f, 1.0f),
                 duration, TweenScaleFunctions.Linear, (t) => NullZoneStrength = t.CurrentProgress);
         }
 

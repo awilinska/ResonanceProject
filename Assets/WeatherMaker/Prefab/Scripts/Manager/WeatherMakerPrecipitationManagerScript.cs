@@ -152,7 +152,7 @@ namespace DigitalRuby.WeatherMaker
             }
 
             float duration = (Mathf.Abs(script.Intensity - end) < PrecipitationChangeThreshold ? 0.0f : PrecipitationChangeDuration);
-            FloatTween tween = TweenFactory.Tween("WeatherMakerPrecipitationChange_" + script.gameObject.GetInstanceID(), script.Intensity, end, duration, TweenScaleFunctions.Linear, (t) =>
+            FloatTween tween = TweenFactory.Tween("WeatherMakerPrecipitationChange_" + script.gameObject.GetEntityId(), script.Intensity, end, duration, TweenScaleFunctions.Linear, (t) =>
             {
                 //Debug.LogFormat("Precipitation tween key: {0}, value: {1}, prog: {2}, duration: {3}, delay: {4}", t.Key, t.CurrentValue, t.CurrentProgress, duration, PrecipitationChangeDelay);
                 script.Intensity = t.CurrentValue;
@@ -254,7 +254,7 @@ namespace DigitalRuby.WeatherMaker
             Color newPrecipitationTintColor = newProfile.PrecipitationProfile.PrecipitationTintColor;
             Color newPrecipitationMistTintColor = newProfile.PrecipitationProfile.PrecipitationMistTintColor;
             Color newPrecipitationSecondaryTintColor = newProfile.PrecipitationProfile.PrecipitationSecondaryTintColor;
-            FloatTween tween = TweenFactory.Tween("WeatherMakerPrecipitation_" + GetInstanceID(), 0.0f, 1.0f, transitionDuration, TweenScaleFunctions.Linear, (ITween<float> c) =>
+            FloatTween tween = TweenFactory.Tween("WeatherMakerPrecipitation_" + GetEntityId(), 0.0f, 1.0f, transitionDuration, TweenScaleFunctions.Linear, (ITween<float> c) =>
             {
                 float progress = c.CurrentValue;
                 precipitationTintColor = Color.Lerp(oldPrecipitationTintColor, newPrecipitationTintColor, progress);

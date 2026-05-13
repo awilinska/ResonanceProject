@@ -825,7 +825,7 @@ namespace DigitalRuby.WeatherMaker
             {
                 autoFoundLights = true;
 #if UNITY_6000_0_OR_NEWER
-                var allLights = GameObject.FindObjectsByType<Light>(FindObjectsSortMode.None);
+                var allLights = GameObject.FindObjectsByType<Light>();
 #else
                 var allLights = GameObject.FindObjectsOfType<Light>();
 #endif
@@ -1212,7 +1212,7 @@ namespace DigitalRuby.WeatherMaker
             CreateDitherTexture();
 
 #if UNITY_6000_0_OR_NEWER
-            var objs = GameObject.FindObjectsByType<WeatherMakerCelestialObjectScript>(FindObjectsSortMode.None);
+            var objs = GameObject.FindObjectsByType<WeatherMakerCelestialObjectScript>();
 #else
             var objs = GameObject.FindObjectsOfType<WeatherMakerCelestialObjectScript>();
 #endif

@@ -1,4 +1,4 @@
-﻿//
+//
 // Weather Maker for Unity
 // (c) 2016 Digital Ruby, LLC
 // Source code may be used for personal or commercial projects.
@@ -100,7 +100,6 @@ Shader "WeatherMaker/WeatherMakerFullScreenCloudsShader"
 
 			#include "WeatherMakerTemporalReprojectionShaderInclude.cginc"
 			#include "WeatherMakerCloudVolumetricRaymarchShaderInclude.cginc"
-			//#include "WeatherMakerCloudVolumetricShaderOldInclude.cginc"
 
 			uniform UNITY_DECLARE_SCREENSPACE_TEXTURE(_WeatherMakerBackgroundSkyTexture);
 
@@ -155,153 +154,17 @@ Shader "WeatherMaker/WeatherMakerFullScreenCloudsShader"
 				return cur;
 			}
 
-			float PrecomputeCloudVolumetricHenyeyGreensteinVolumetric(DirLightPrecomputation dirLight)
-			{
-
-#define VOLUMETRIC_MAX_HENYEY_GREENSTEIN 5.0
-
-				// https://www.diva-portal.org/smash/get/diva2:1223894/FULLTEXT01.pdf
-				// f(x) = (1 - g)^2 / (4PI * (1 + g^2 - 2g*cos(x))^[3/2])
-				// _CloudHenyeyGreensteinPhase.x = forward, _CloudHenyeyGreensteinPhase.y = back
-				static const float g = _CloudHenyeyGreensteinPhaseVolumetric.x;
-				static const float gSquared = g * g;
-				static const float oneMinusGSquared = (1.0 - gSquared);
-				static const float onePlusGSquared = 1.0 + gSquared;
-				static const float twoG = 2.0 * g;
-				float falloff = pow(PI * (onePlusGSquared - (twoG * dirLight.eyeDot)), 1.5);
-				float forward = oneMinusGSquared / falloff;
-
-				static const float g2 = _CloudHenyeyGreensteinPhaseVolumetric.y;
-				static const float gSquared2 = g2 * g2;
-				static const float oneMinusGSquared2 = (1.0 - gSquared2);
-				static const float onePlusGSquared2 = 1.0 + gSquared2;
-				static const float twoG2 = 2.0 * g2;
-				float falloff2 = pow(PI * (onePlusGSquared2 - (twoG2 * dirLight.eyeDot)), 1.5);
-				float back = oneMinusGSquared2 / falloff2;
-
-				// hg back lighting is more dim than hg forward light as light intensity goes below 1
-				return min(VOLUMETRIC_MAX_HENYEY_GREENSTEIN, (((forward * _CloudHenyeyGreensteinPhaseVolumetric.z) + (back * dirLight.intensity * _CloudHenyeyGreensteinPhaseVolumetric.w))));
-			}
-
-			DirLightPrecomputation PrecomputeDirLight(in CloudState state, float3 rayDir, uint lightIndex)
-			{
-				UNITY_BRANCH
-				if (_WeatherMakerDirLightColor[lightIndex].a > 0.0)
-				{
-					fixed3 lightColor = _WeatherMakerDirLightColor[lightIndex].rgb;
-					float3 lightDir = _WeatherMakerDirLightPosition[lightIndex].xyz;
-					// make sure we don't walk down, this causes artifacts at horizon
-					lightDir.y = max(0.1, lightDir.y);
-
-					float intensity = min(1.0, _WeatherMakerDirLightColor[lightIndex].a);
-					float intensitySquared = intensity * intensity;
-					float eyeDot = dot(rayDir, lightDir);
-					DirLightPrecomputation item;
-					item.eyeDot = eyeDot;
-					float energy = max(_WeatherMakerDirLightColor[lightIndex].a, max(0.33, (eyeDot + 1.0) * 0.5) * _WeatherMakerDirLightVar1[lightIndex].w) * _CloudDirLightMultiplierVolumetric;
-					item.intensity = intensity;
-					item.intensitySquared = intensitySquared;
-					item.hg = PrecomputeCloudVolumetricHenyeyGreensteinVolumetric(item) * energy;
-					item.lightDir = lightDir;
-					float powderEyeDot = ((eyeDot * -0.5) + 0.5);
-					item.powderMultiplier = lerp(1.0, _CloudPowderMultiplierVolumetric, min(1.0, 4.0 * intensity * lightDir.y * lightDir.y));
-					item.powderAngle = min(1.0, _CloudPowderMultiplierVolumetric * powderEyeDot * intensity) * min(1.0, _CloudPowderMultiplierVolumetric);
-
-					// horizontal lights cause more shadow because more air and general cloud to go through
-					item.shadowPower = (1.0 - lightDir.y);
-					item.shadowPower *= item.shadowPower;
-					item.shadowPower += 0.5;
-					item.shadowPower *= _CloudLightAbsorptionVolumetric;
-
-					// reduce cone radius as light goes horizontal, light is more diffused
-					item.lightConeRadius = state.lightStepSize * _CloudLightRadiusMultiplierVolumetric * clamp(lightDir.y * 2.5, 0.1, 1.0);
-					item.indirectLight = item.intensity * lightColor * _CloudDirLightIndirectMultiplierVolumetric;
-					return item;
-				}
-				else
-				{
-					return emptyDirLight;
-				}
-			}
-
-			CloudState PrecomputeCloudState(float3 rayDir, float2 uv)
-			{
-				CloudState state;
-				state.dithering = tex2Dlod(_WeatherMakerBlueNoiseTexture, float4(uv + _WeatherMakerTemporalUV_FragmentShader, 0.0, 0.0));
-				state.lightStepSize = volumetricDirLightStepSize * (1.0 + (state.dithering * 0.015));
-				state.lightColorDithering = (state.dithering * 0.005);
-				state.fade = 0.0;
-
-				UNITY_UNROLL
-				for (uint lightIndex = 0; lightIndex < uint(MAX_LIGHT_COUNT); lightIndex++)
-				{
-					state.dirLight[lightIndex] = PrecomputeDirLight(state, rayDir, lightIndex);
-				}
-
-				return state;
-			}
-
 			fixed4 full_screen_clouds_frag_impl(wm_full_screen_fragment i) : SV_Target
 			{
-				float hitCloud = 0.0;
 				float depth, depth01;
 				float3 cloudRay = i.forwardLine;
 				GetDepthAndRay(i.uv, cloudRay, i.forwardLine, depth, depth01);
 				CloudState state = PrecomputeCloudState(cloudRay, i.uv.xy);
-				fixed4 finalColor = fixed4Zero;
-                //return fixed4(depth01, depth01, depth01, 1.0);
-
-				// assumption- flat clouds are above volumetric clouds
-				CloudColorResult flatColor = ComputeFlatCloudColorAll(cloudRay, depth, i.uv, _CloudNoiseLod, state);
-				hitCloud = flatColor.hitCloud;
-				finalColor = flatColor.color;
-
-				// volumetric layer
-				UNITY_BRANCH
-				if (_CloudCoverVolumetric > 0.0)
-				{
-					// https://gamedev.stackexchange.com/questions/138813/whats-the-difference-between-alpha-and-premulalpha
-					CloudColorResult volumetricColor = ComputeCloudColorVolumetric(cloudRay, i.uv, depth, depth01, state);
-					hitCloud = min(1.0, hitCloud + volumetricColor.hitCloud);
-					fixed horizonFade = volumetricColor.fade;
-					finalColor = volumetricColor.color + (finalColor * (1.0 - volumetricColor.color.a));
-
-					// old stuff
-					//return ComputeCloudColorVolumetric(cloudRay, i.uv, depth, 0);
-
-#if VOLUMETRIC_CLOUD_RENDER_MODE == 1 // render mode 1 = normal render mode
-
-					UNITY_BRANCH
-					if (horizonFade < 1.0 && finalColor.a > 0.0)
-					{
-						// return fixed4(horizonFade, horizonFade, horizonFade, 1.0);
-
-						UNITY_BRANCH
-						if (volumetricIsAboveClouds)
-						{
-							// above clouds, just remove alpha
-							finalColor *= horizonFade;
-						}
-						else
-						{
-							// retrieve sky color without sun, moon or stars
-							fixed4 backgroundSkyColor = WM_SAMPLE_FULL_SCREEN_TEXTURE(_WeatherMakerBackgroundSkyTexture, i.uv.xy + _WeatherMakerTemporalUV_FragmentShader);
-
-							// at night, make the sky disappear so stars don't show through the clouds
-							backgroundSkyColor = lerp(backgroundSkyColor, fixed4(_WeatherMakerAmbientLightColorEquator, 1.0), _WeatherMakerNightMultiplier);
-
-							// reduce cloud opacity by horizon fade
-							finalColor.rgb *= horizonFade;
-
-							// TODO: This is very close, there is a jerk on the sky when showing/hiding clouds, figure out why...
-							// add in background sky to simulate atmospheric scattering to desired intensity
-							finalColor.rgb += (backgroundSkyColor.rgb * (1.0 - horizonFade) * finalColor.a);
-						}
-					}
-
-#endif
-
-				}
+				fixed4 backgroundSkyColor = WM_SAMPLE_FULL_SCREEN_TEXTURE(_WeatherMakerBackgroundSkyTexture, i.uv.xy + _WeatherMakerTemporalUV_FragmentShader);
+				backgroundSkyColor = lerp(backgroundSkyColor, fixed4(_WeatherMakerAmbientLightColorEquator, 1.0), _WeatherMakerNightMultiplier);
+				CloudColorResult cloudColor = ComputeCloudColorAll(WEATHER_MAKER_CLOUD_CAMERA_POS, cloudRay, i.uv, depth, depth01, backgroundSkyColor, state);
+				float hitCloud = cloudColor.hitCloud;
+				fixed4 finalColor = cloudColor.color;
 
 				// northern lights layer
 				UNITY_BRANCH
@@ -336,6 +199,7 @@ Shader "WeatherMaker/WeatherMakerFullScreenCloudsShader"
 			#pragma multi_compile_instancing
 
 			#include "WeatherMakerCloudVolumetricUniformsShaderInclude.cginc"
+			#include "WeatherMakerCloudVolumetricRaymarchSetupShaderInclude.cginc"
 
 			float4 frag(wm_full_screen_fragment i) : SV_Target
 			{ 
@@ -352,18 +216,13 @@ Shader "WeatherMaker/WeatherMakerFullScreenCloudsShader"
 						float3 rayDir = i.forwardLine;
 						// don't use ray offset, we want the exact depth buffer value
 						GetDepthAndRay(i.uv, rayDir, i.forwardLine, depth, depth01);
-						float3 startPos, startPos2;
-						float3 endPos, endPos2;
-						float rayLength, rayLength2;
-						float distanceToSphere, distanceToSphere2;
-						uint iterations = SetupCloudRaymarch(WEATHER_MAKER_CAMERA_POS, rayDir, depth, depth,
-							startPos, endPos, rayLength, distanceToSphere, startPos2, endPos2, rayLength2, distanceToSphere2);
+						CloudRaymarchSetupResult raymarchSetup = SetupCloudRaymarch(WEATHER_MAKER_CAMERA_POS, rayDir, depth, depth);
 
 						// return 1.0 / ((_ZBufferParams.x * z) + _ZBufferParams.y);
 						// TODO: The left of this lerp is incorrect far above the clouds, figure out why...
 						//float cloudLayerDepth01 = GetDepth01FromWorldSpaceRay(rayDir, distanceToSphere);
 						float depthPos = length(depth01 * i.forwardLine);
-						float cloudLayerDepth01 = saturate(lerp(0.0, depth01, distanceToSphere / depthPos));
+						float cloudLayerDepth01 = saturate(lerp(0.0, depth01, raymarchSetup.distanceToSphere / depthPos));
 						return min(depth01, cloudLayerDepth01);
 					}
 					else

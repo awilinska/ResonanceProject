@@ -182,7 +182,7 @@ namespace DigitalRuby.WeatherMaker
             if (AutoAddLightsOnStart && WeatherMakerLightManagerScript.HasInstance())
             {
 #if UNITY_6000_0_OR_NEWER
-                var lights = GameObject.FindObjectsByType<Light>(FindObjectsSortMode.None);
+                var lights = GameObject.FindObjectsByType<Light>();
 #else
                 var lights = GameObject.FindObjectsOfType<Light>();
 #endif

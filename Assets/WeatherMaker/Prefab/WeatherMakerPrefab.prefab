@@ -44897,7 +44897,7 @@ Light:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1616679408357746}
   m_Enabled: 1
-  serializedVersion: 12
+  serializedVersion: 13
   m_Type: 1
   m_Color: {r: 0.6350551, g: 0.631596, b: 0.86764705, a: 1}
   m_Intensity: 0
@@ -44949,7 +44949,7 @@ Light:
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ForceVisible: 0
-  m_ShadowRadius: 0
+  m_ShapeRadius: 0
   m_ShadowAngle: 0
   m_LightUnit: 1
   m_LuxAtDistance: 1
@@ -44983,6 +44983,7 @@ MonoBehaviour:
   HorizonMultiplier: {x: 0, y: 0, z: 0}
   LensFlareBlocker: {fileID: 1778334206793172}
   FlareCloudProbeTarget: {fileID: 4011856518406940}
+  MinYRayToShowFlare: 0.15
   MinimumCloudCoverToBlockLensFlare: 0.5
 --- !u!33 &33129870607736778
 MeshFilter:
@@ -45231,6 +45232,7 @@ MonoBehaviour:
     m_NumAlphaKeys: 2
   VolumetricCloudBoxRemap: {fileID: 0}
   CloudRealtimeNoiseProfile: {fileID: 0}
+  ShowCloudProbeOverlay: 0
 --- !u!1 &1653273142316700
 GameObject:
   m_ObjectHideFlags: 0
@@ -54955,7 +54957,7 @@ MonoBehaviour:
   TemporalReprojectionMaterial: {fileID: 2100000, guid: e4751bbeeec27b3488f98d0d6a71769a, type: 2}
   BlurShader: 3
   TemporalReprojection: 0
-  FogRenderQueue: 17
+  FogRenderQueue: 16
   AllowReflections: 1
   FogShadowStrength: 1
 --- !u!1 &1782855910056912
@@ -64970,7 +64972,7 @@ Light:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1953708332601736}
   m_Enabled: 1
-  serializedVersion: 12
+  serializedVersion: 13
   m_Type: 1
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Intensity: 1
@@ -65022,7 +65024,7 @@ Light:
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ForceVisible: 0
-  m_ShadowRadius: 0
+  m_ShapeRadius: 0
   m_ShadowAngle: 0
   m_LightUnit: 1
   m_LuxAtDistance: 1
@@ -65056,6 +65058,7 @@ MonoBehaviour:
   HorizonMultiplier: {x: 20, y: 3, z: 8}
   LensFlareBlocker: {fileID: 1172320941076990}
   FlareCloudProbeTarget: {fileID: 4140108818587872}
+  MinYRayToShowFlare: 0.15
   MinimumCloudCoverToBlockLensFlare: 0.5
 --- !u!23 &23279148289904134
 MeshRenderer:

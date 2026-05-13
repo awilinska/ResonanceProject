@@ -61,155 +61,156 @@ float3 CloudVolumetricLightEnergy(DirLightPrecomputation dirLight, float density
 fixed3 SampleDirLightSources(float3 marchPos, float3 rayDir, float startHeightFrac, float cloudSample,
 	float eyeDensity, float lod, inout CloudState state)
 {
-	fixed3 lightTotal = fixed3Zero;
-
 	UNITY_BRANCH
 	if (_CloudDirLightMultiplierVolumetric <= 0.0)
 	{
-		return lightTotal;
-	}
+        return fixed3Zero;
+    }
+	else
+    {
+        fixed3 lightTotal = fixed3Zero;
+        float indirectHeightFrac = max(0.3, startHeightFrac);
+        lod = max(_CloudDirLightLod, lod + _CloudDirLightLod);
+        float stepSize = state.lightStepSize;
 
-	float indirectHeightFrac = max(0.3, startHeightFrac);
-	lod = max(_CloudDirLightLod, lod + _CloudDirLightLod);
-	float stepSize = state.lightStepSize;
+	    // take advantage of the fact that lights are sorted by perspective/ortho and then by intensity
+        UNITY_LOOP
+        for (uint lightIndex = 0; lightIndex < uint(_WeatherMakerDirLightCount) && lightIndex < 2 && _WeatherMakerDirLightVar1[lightIndex].y == 0.0 && _WeatherMakerDirLightColor[lightIndex].a > 0.0; lightIndex++)
+        {
+            float3 lightDir = state.dirLight[lightIndex].lightDir;
+            float lightShadow = state.dirLight[lightIndex].shadowPower;
+            fixed4 lightColor = _WeatherMakerDirLightColor[lightIndex];
+            float3 lightStep = (lightDir.xyz * stepSize);
+            float heightFrac = 0.0;
+            float4 weatherData = float4Zero;
+            float coneRadius = state.dirLight[lightIndex].lightConeRadius;
+            float coneRadiusStep = coneRadius;
+            coneRadius *= VOLUMETRIC_LIGHT_FIRST_STEP_MULTIPLIER;
+            float3 samplePos = float3Zero;
+            float3 energy = float3Zero;
+            float densityToLight = 0.0;
+            float subSampleDensity = 0.0;
+            float3 pos = marchPos + (lightStep * VOLUMETRIC_LIGHT_FIRST_STEP_MULTIPLIER);
 
-	// take advantage of the fact that lights are sorted by perspective/ortho and then by intensity
-	UNITY_LOOP
-	for (uint lightIndex = 0; lightIndex < uint(_WeatherMakerDirLightCount) && lightIndex < 2 && _WeatherMakerDirLightVar1[lightIndex].y == 0.0 && _WeatherMakerDirLightColor[lightIndex].a > 0.0; lightIndex++)
-	{
-		float3 lightDir = state.dirLight[lightIndex].lightDir;
-		float lightShadow = state.dirLight[lightIndex].shadowPower;
-		fixed4 lightColor = _WeatherMakerDirLightColor[lightIndex];
-		float3 lightStep = (lightDir.xyz * stepSize);
-		float heightFrac;
-		float4 weatherData;
-		float coneRadius = state.dirLight[lightIndex].lightConeRadius;
-		float coneRadiusStep = coneRadius;
-		coneRadius *= VOLUMETRIC_LIGHT_FIRST_STEP_MULTIPLIER;
-		float3 samplePos;
-		float3 energy;
-		float densityToLight = 0.0;
-		float subSampleDensity;
-		float3 pos = marchPos + (lightStep * VOLUMETRIC_LIGHT_FIRST_STEP_MULTIPLIER);
+            UNITY_LOOP
+            for (uint i = 0; i < volumetricLightIterations && densityToLight < VOLUMETRIC_MAX_LIGHT_DENSITY; i++)
+            {
+                subSampleDensity = 0.0;
 
-		UNITY_LOOP
-		for (uint i = 0; i < volumetricLightIterations && densityToLight < VOLUMETRIC_MAX_LIGHT_DENSITY; i++)
-		{
-			subSampleDensity = 0.0;
+                UNITY_LOOP
+                for (uint j = 0; j < volumetricLightSubIterations; j++)
+                {
+				    // sample in the cone, take the march pos and perturb by random vector and cone radius
+                    samplePos = pos + (weatherMakerRandomCone[(i + j) % 16] * coneRadius);
 
-			UNITY_LOOP
-			for (uint j = 0; j < volumetricLightSubIterations; j++)
-			{
-				// sample in the cone, take the march pos and perturb by random vector and cone radius
-				samplePos = pos + (weatherMakerRandomCone[(i + j) % 16] * coneRadius);
+				    // ensure a minimum height - if this goes too low, lighting gets really ugly near the horizon
+                    heightFrac = max(0.01, GetCloudHeightFractionForPoint(samplePos));
 
-				// ensure a minimum height - if this goes too low, lighting gets really ugly near the horizon
-				heightFrac = max(0.01, GetCloudHeightFractionForPoint(samplePos));
+                    UNITY_BRANCH
+                    if (heightFrac > 1.0)
+                    {
+					    // marched out of cloud volume
+                        i = j = volumetricLightIterations;
+                    }
+                    else
+                    {
+					    // lookup position for cloud density
+                        weatherData = CloudVolumetricSampleWeather(samplePos, heightFrac, lod);
 
-				UNITY_BRANCH
-				if (heightFrac > 1.0)
-				{
-					// marched out of cloud volume
-					i = j = volumetricLightIterations;
-				}
-				else
-				{
-					// lookup position for cloud density
-					weatherData = CloudVolumetricSampleWeather(samplePos, heightFrac, lod);
+                        UNITY_BRANCH
+                        if (CloudVolumetricGetCoverage(weatherData) > _CloudCoverVolumetricMinimumForCloud)
+                        {
+                            UNITY_BRANCH
+                            if (WM_CAMERA_RENDER_MODE_REFLECTION)
+                            {
+							    // fast approximation for reflections only
+                                fixed coverage = CloudVolumetricGetCoverage(weatherData);
+                                fixed type = CloudVolumetricGetType(weatherData);
+                                subSampleDensity += ((coverage * coverage * GetDensityHeightGradientForHeight(heightFrac, type).x));
+                            }
+                            else
+                            {
+                                subSampleDensity += (lightShadow * SampleCloudDensity(samplePos, weatherData, heightFrac, lod, _CloudRaymarchSampleDetailsForDirLight));
+                            }
+                        }
+                    }
 
-					UNITY_BRANCH
-					if (CloudVolumetricGetCoverage(weatherData) > _CloudCoverVolumetricMinimumForCloud)
-					{
-						UNITY_BRANCH
-						if (WM_CAMERA_RENDER_MODE_REFLECTION)
-						{
-							// fast approximation for reflections only
-							fixed coverage = CloudVolumetricGetCoverage(weatherData);
-							fixed type = CloudVolumetricGetType(weatherData);
-							subSampleDensity += ((coverage * coverage * GetDensityHeightGradientForHeight(heightFrac, type).x));
-						}
-						else
-						{
-							subSampleDensity += (lightShadow * SampleCloudDensity(samplePos, weatherData, heightFrac, lod, _CloudRaymarchSampleDetailsForDirLight));
-						}
-					}
-				}
+				    // early exit cone loop when this step alone would saturate light density
+                    if (subSampleDensity >= VOLUMETRIC_MAX_LIGHT_DENSITY)
+                    {
+                        break;
+                    }
+                }
 
-				// early exit cone loop when this step alone would saturate light density
-				if (subSampleDensity >= VOLUMETRIC_MAX_LIGHT_DENSITY)
-				{
-					break;
-				}
-			}
+			    // average the samples
+                densityToLight += (subSampleDensity * invVolumetricLightSubIterations);
 
-			// average the samples
-			densityToLight += (subSampleDensity * invVolumetricLightSubIterations);
+			    // march to next position
+                coneRadius += coneRadiusStep;
+                pos += lightStep;
+            }
 
-			// march to next position
-			coneRadius += coneRadiusStep;
-			pos += lightStep;
-		}
+            UNITY_BRANCH
+            if (_CloudLightDistantMultiplierVolumetric > 0.0 && densityToLight < VOLUMETRIC_MAX_LIGHT_DENSITY)
+            {
+			    // one final sample farther away for distant cloud
+                samplePos = pos + (lightStep * _CloudLightDistantMultiplierVolumetric);
+                heightFrac = GetCloudHeightFractionForPoint(samplePos);
 
-		UNITY_BRANCH
-		if (_CloudLightDistantMultiplierVolumetric > 0.0 && densityToLight < VOLUMETRIC_MAX_LIGHT_DENSITY)
-		{
-			// one final sample farther away for distant cloud
-			samplePos = pos + (lightStep * _CloudLightDistantMultiplierVolumetric);
-			heightFrac = GetCloudHeightFractionForPoint(samplePos);
+                UNITY_BRANCH
+                if (heightFrac <= 1.0)
+                {
+                    weatherData = CloudVolumetricSampleWeather(samplePos, heightFrac, lod + 1.0);
 
-			UNITY_BRANCH
-			if (heightFrac <= 1.0)
-			{
-				weatherData = CloudVolumetricSampleWeather(samplePos, heightFrac, lod + 1.0);
-
-				UNITY_BRANCH
-				if (CloudVolumetricGetCoverage(weatherData) > _CloudCoverVolumetricMinimumForCloud)
-				{
-					UNITY_BRANCH
-					if (WM_CAMERA_RENDER_MODE_REFLECTION)
-					{
-						// fast approximation for reflections only
-						fixed coverage = CloudVolumetricGetCoverage(weatherData);
-						fixed type = CloudVolumetricGetType(weatherData);
-						densityToLight += (lightShadow * (coverage * coverage * GetDensityHeightGradientForHeight(heightFrac, type).x));
-					}
-					else
-					{
-						densityToLight += (lightShadow *
+                    UNITY_BRANCH
+                    if (CloudVolumetricGetCoverage(weatherData) > _CloudCoverVolumetricMinimumForCloud)
+                    {
+                        UNITY_BRANCH
+                        if (WM_CAMERA_RENDER_MODE_REFLECTION)
+                        {
+						    // fast approximation for reflections only
+                            fixed coverage = CloudVolumetricGetCoverage(weatherData);
+                            fixed type = CloudVolumetricGetType(weatherData);
+                            densityToLight += (lightShadow * (coverage * coverage * GetDensityHeightGradientForHeight(heightFrac, type).x));
+                        }
+                        else
+                        {
+                            densityToLight += (lightShadow *
 							SampleCloudDensity(samplePos, weatherData, heightFrac, lod + 1.0, _CloudRaymarchSampleDetailsForDirLight));
-					}
-				}
-			}
-		}
+                        }
+                    }
+                }
+            }
 
-		// one sample for flat cloud light density
-		UNITY_BRANCH
-		if (densityToLight < VOLUMETRIC_MAX_LIGHT_DENSITY)
-		{
-			fixed flatShadows = 0.5 * ComputeFlatCloudShadows(lightDir, marchPos, lod);
-			densityToLight += flatShadows;
-		}
+		    // one sample for flat cloud light density
+            UNITY_BRANCH
+            if (densityToLight < VOLUMETRIC_MAX_LIGHT_DENSITY)
+            {
+                fixed flatShadows = 0.5 * ComputeFlatCloudShadows(lightDir, marchPos, lod);
+                densityToLight += flatShadows;
+            }
 
-		state.fade = 0.0;// clamp(1.0 / densityToLight, 0.0, 0.5);
+            state.fade = 0.0; // clamp(1.0 / densityToLight, 0.0, 0.5);
 
-		energy = CloudVolumetricLightEnergy(state.dirLight[lightIndex], cloudSample, eyeDensity,
+            energy = CloudVolumetricLightEnergy(state.dirLight[lightIndex], cloudSample, eyeDensity,
 			densityToLight, lightDir, rayDir);
-		fixed energyScalar = energy.x * energy.y * energy.z;
-		energyScalar = max(0.0, energyScalar + state.lightColorDithering); // dither light for further banding reduction
+            fixed energyScalar = energy.x * energy.y * energy.z;
+            energyScalar = max(0.0, energyScalar + state.lightColorDithering); // dither light for further banding reduction
 
-		// cascade shadow map
-		UNITY_BRANCH
-		if (_WeatherMakerCloudShadowSampleShadowMap < 1.0 && lightIndex == 0 && energyScalar > _WeatherMakerCloudShadowSampleShadowMap && _WeatherMakerDirLightPower[lightIndex].z > 0.05)
-		{
-			energyScalar *= lerp(wm_sample_shadow_world_pos(marchPos, _WeatherMakerCloudShadowSampleShadowMap), 1.0, _WeatherMakerDirLightPower[lightIndex].w);
-			//energyScalar = min(energyScalar, lerp(wm_sample_shadow_world_pos(marchPos, _WeatherMakerCloudShadowSampleShadowMap), 1.0, _WeatherMakerDirLightPower[lightIndex].w));
-		}
+		    // cascade shadow map
+            UNITY_BRANCH
+            if (_WeatherMakerCloudShadowSampleShadowMap < 1.0 && lightIndex == 0 && energyScalar > _WeatherMakerCloudShadowSampleShadowMap && _WeatherMakerDirLightPower[lightIndex].z > 0.05)
+            {
+                energyScalar *= lerp(wm_sample_shadow_world_pos(marchPos, _WeatherMakerCloudShadowSampleShadowMap), 1.0, _WeatherMakerDirLightPower[lightIndex].w);
+			    //energyScalar = min(energyScalar, lerp(wm_sample_shadow_world_pos(marchPos, _WeatherMakerCloudShadowSampleShadowMap), 1.0, _WeatherMakerDirLightPower[lightIndex].w));
+            }
 
-		// indirect + direct light
-		lightTotal += (state.dirLight[lightIndex].indirectLight * indirectHeightFrac) + (lightColor.rgb * energyScalar);
-	}
+		    // indirect + direct light
+            lightTotal += (state.dirLight[lightIndex].indirectLight * indirectHeightFrac) + (lightColor.rgb * energyScalar);
+        }
 
-	return lightTotal * _CloudDirColorVolumetric;
+        return lightTotal * _CloudDirColorVolumetric;
+    }
 }
 
 fixed3 SamplePointLightSources(float3 marchPos, float3 rayDir, float startHeightFrac, float cloudSample, float eyeDensity, float lod, float4 uv)

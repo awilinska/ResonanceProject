@@ -10,6 +10,13 @@ using System;
 
 namespace DigitalRuby.WeatherMaker
 {
+    /// <summary>
+    /// URP Render Feature for Weather Maker.
+    /// 
+    /// This implementation targets URP 17.4+ and uses the mandatory Render Graph API.
+    /// Legacy compatibility methods (OnCameraSetup, Execute, SetupRenderPasses) have been removed
+    /// as they are no longer available in newer URP versions.
+    /// </summary>
     public class WeatherMakerURPRenderFeatureScript : ScriptableRendererFeature
     {
         /// <summary>
@@ -51,8 +58,6 @@ namespace DigitalRuby.WeatherMaker
 
             private readonly WeatherMakerURPRenderFeatureScript feature;
             private readonly CameraEvent cameraEvent;
-            private RTHandle colorTarget;
-            private RTHandle depthTarget;
 
             public CameraEvent CameraEvent => cameraEvent;
 
@@ -103,48 +108,6 @@ namespace DigitalRuby.WeatherMaker
                     WeatherMakerFullScreenEffect.currentURPColorTarget = null;
                     WeatherMakerFullScreenEffect.currentURPDepthTarget = null;
                 }
-            }
-
-            [System.Obsolete("This rendering path is for compatibility mode only (when Render Graph is disabled). Use Render Graph API instead.", false)]
-            public override void OnCameraSetup(CommandBuffer cmd, ref RenderingData renderingData)
-            {
-                if (feature.Renderer != null)
-                {
-                    colorTarget = feature.Renderer.cameraColorTargetHandle;
-                    depthTarget = feature.Renderer.cameraDepthTargetHandle;
-                    ConfigureTarget(colorTarget, depthTarget);
-                }
-            }
-
-            [System.Obsolete("This rendering path is for compatibility mode only (when Render Graph is disabled). Use Render Graph API instead.", false)]
-            public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
-            {
-                if (WeatherMakerCommandBufferManagerScript.Instance == null)
-                {
-                    return;
-                }
-
-                Camera camera = renderingData.cameraData.camera;
-                if (camera != null && camera.cameraType == CameraType.SceneView &&
-                    (WeatherMakerScript.Instance == null || !WeatherMakerScript.Instance.AllowSceneCamera))
-                {
-                    return;
-                }
-
-                var actions = WeatherMakerCommandBufferManagerScript.Instance.GetCameraCommandBufferActions(camera, cameraEvent);
-                if (actions == null || actions.Count == 0)
-                {
-                    return;
-                }
-
-                var cmd = new CommandBuffer();
-                cmd.name = "WeatherMaker " + cameraEvent.ToString();
-                SetRenderTargets(cmd, colorTarget, depthTarget);
-                ExecuteActions(cmd, actions, colorTarget, depthTarget, camera);
-                SetRenderTargets(cmd, colorTarget, depthTarget);
-                context.ExecuteCommandBuffer(cmd);
-                cmd.Clear();
-                cmd.Dispose();
             }
 
             private class PassData
@@ -287,14 +250,6 @@ namespace DigitalRuby.WeatherMaker
                     renderer.EnqueuePass(kvp.Value);
                 }
             }
-        }
-
-        //[Obsolete("This rendering path is for compatibility mode only (when Render Graph is disabled). Use Render Graph API instead.", false)]
-        public override void SetupRenderPasses(ScriptableRenderer renderer, in RenderingData renderingData)
-        {
-            this.Renderer = renderer;
-            WeatherMakerFullScreenEffect.urpRenderer = this;
-            base.SetupRenderPasses(renderer, renderingData);
         }
 #pragma warning restore CS0618
 

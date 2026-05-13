@@ -22,6 +22,8 @@
 
 fixed ComputeCloudShadowStrength(float noise, uint cloudIndex);
 fixed ComputeFlatCloudShadows(float3 rayDirLight, float3 worldPos, float lod = 0.0, uint startCloudIndex = 0);
+float2 ComputeCloudNoiseWithOffset(float3 rayDir, float3 worldPos, float depth, sampler2D noiseTex, uint cloudIndex, float lod, float3 cloudCameraPos, out float3 worldPosHit);
+fixed ComputeFlatCloudDensityBetween(float3 rayDir, float3 start, float3 end, float3 cloudCameraPos);
 
 // returns world pos of cloud plane intersect
 float3 CloudRaycastWorldPosPlane(float3 ray, float3 worldPos, float depth, uint cloudIndex)
@@ -36,6 +38,11 @@ float3 CloudRaycastWorldPosPlane(float3 ray, float3 worldPos, float depth, uint 
 }
 
 float2 ComputeCloudNoise(float3 rayDir, float3 worldPos, float depth, sampler2D noiseTex, uint cloudIndex, float lod, out float3 worldPosHit)
+{
+	return ComputeCloudNoiseWithOffset(rayDir, worldPos, depth, noiseTex, cloudIndex, lod, WEATHER_MAKER_CLOUD_CAMERA_POS, worldPosHit);
+}
+
+float2 ComputeCloudNoiseWithOffset(float3 rayDir, float3 worldPos, float depth, sampler2D noiseTex, uint cloudIndex, float lod, float3 cloudCameraPos, out float3 worldPosHit)
 {
 	worldPosHit = float3Zero;
 
@@ -60,7 +67,7 @@ float2 ComputeCloudNoise(float3 rayDir, float3 worldPos, float depth, sampler2D 
 			UNITY_BRANCH
 			if (noise > 0.01 && depth < _ProjectionParams.z)
 			{
-				float partZ = distance(worldPosHit, WEATHER_MAKER_CLOUD_CAMERA_POS);
+				float partZ = distance(worldPosHit, cloudCameraPos);
 				float diff = (depth - partZ);
 				noise *= saturate(_CloudInvFade * diff);
 			}
@@ -185,13 +192,23 @@ fixed3 ComputeCloudLighting(float noise, float3 rayDir, float3 worldPos, float2 
 
 fixed ComputeFlatCloudDensityBetween(float3 rayDir, float3 start, float3 end)
 {
+	return ComputeFlatCloudDensityBetween(rayDir, start, end, WEATHER_MAKER_CLOUD_CAMERA_POS);
+}
+
+fixed ComputeFlatCloudDensityBetween(float3 rayDir, float3 start, float3 end, float3 cloudCameraPos)
+{
 	float depth = distance(start, end);
 	float3 worldPosHit;
-	fixed flatDensity = ComputeCloudNoise(rayDir, start, depth, _CloudNoise1, 0, 0.0, worldPosHit).x;
-	flatDensity += ComputeCloudNoise(rayDir, start, depth, _CloudNoise1, 1, 0.0, worldPosHit).x;
-	flatDensity += ComputeCloudNoise(rayDir, start, depth, _CloudNoise1, 2, 0.0, worldPosHit).x;
-	flatDensity += ComputeCloudNoise(rayDir, start, depth, _CloudNoise1, 3, 0.0, worldPosHit).x;
+	fixed flatDensity = ComputeCloudNoiseWithOffset(rayDir, start, depth, _CloudNoise1, 0, 0.0, cloudCameraPos, worldPosHit).x;
+	flatDensity += ComputeCloudNoiseWithOffset(rayDir, start, depth, _CloudNoise1, 1, 0.0, cloudCameraPos, worldPosHit).x;
+	flatDensity += ComputeCloudNoiseWithOffset(rayDir, start, depth, _CloudNoise1, 2, 0.0, cloudCameraPos, worldPosHit).x;
+	flatDensity += ComputeCloudNoiseWithOffset(rayDir, start, depth, _CloudNoise1, 3, 0.0, cloudCameraPos, worldPosHit).x;
 	return min(flatDensity, flatDensity * flatDensity);
+}
+
+fixed ComputeFlatCloudDensityBetweenProbe(float3 rayDir, float3 start, float3 end)
+{
+	return ComputeFlatCloudDensityBetween(rayDir, start, end, float3Zero);
 }
 
 fixed ComputeCloudShadowStrength(float noise, uint cloudIndex)

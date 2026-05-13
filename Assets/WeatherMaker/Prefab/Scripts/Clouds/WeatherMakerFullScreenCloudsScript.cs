@@ -23,6 +23,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace DigitalRuby.WeatherMaker
 {
@@ -152,6 +153,13 @@ namespace DigitalRuby.WeatherMaker
         public WeatherMakerCloudNoiseProfileGroupScript CloudRealtimeNoiseProfile;
 
         /// <summary>
+        /// Show a debug overlay with all cloud probe results.
+        /// </summary>
+        [Header("Full Screen Clouds - Debug")]
+        [Tooltip("Show a debug overlay with all cloud probe results in the center of the screen.")]
+        public bool ShowCloudProbeOverlay;
+
+        /// <summary>
         /// Allow rendering to command buffer before the clouds render
         /// </summary>
         public readonly List<System.Action<WeatherMakerCommandBuffer>> BeforeCloudsRenderHooks = new List<System.Action<WeatherMakerCommandBuffer>>();
@@ -201,33 +209,44 @@ namespace DigitalRuby.WeatherMaker
         {
             public Vector4 Source;
             public Vector4 Target;
+            public Vector4 Params;
+            public Vector4 Output;
+            public Vector4 Output2;
+            public Vector4 Output3;
+            public Vector4 Output4;
+            public Vector4 Output5;
+            public Vector4 Output6;
         }
 
         /// <summary>
         /// Result of a cloud probe operation
         /// </summary>
-        [StructLayout(LayoutKind.Sequential, Pack = 1)]
         public struct CloudProbeResult
         {
             /// <summary>
-            /// Cloud density at the source (0 - 1)
+            /// Cloud density at the source
             /// </summary>
             public float DensitySource;
 
             /// <summary>
-            /// Cloud density at the target (0 - 1)
+            /// Cloud density at the target
             /// </summary>
             public float DensityTarget;
 
             /// <summary>
-            /// Cloud density ray average (64 samples, 0 - 1)
+            /// Cloud density ray sum
+            /// </summary>
+            public float DensityRaySum;
+
+            /// <summary>
+            /// Density ray average
             /// </summary>
             public float DensityRayAverage;
 
             /// <summary>
-            /// Cloud density ray sum (64 samples, 0 - 64)
+            /// Debug string
             /// </summary>
-            public float DensityRaySum;
+            public string DebugString { get; set; }
         }
 
         private static readonly List<CloudProbeComputeRequest> probeRequestPool = new List<CloudProbeComputeRequest>();
@@ -264,19 +283,24 @@ namespace DigitalRuby.WeatherMaker
             }
         }
 
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
         private struct CloudProbeRequest
         {
             public Camera Camera;
             public Transform Source;
             public Transform Target;
+            public Vector4 Params;
         }
 
-        private const float oneOver64 = 0.015625f;
+        private const int computeBufferCount = 1;
         private ComputeShader cloudProbeShader;
         private readonly List<CloudProbeComputeRequest> cloudProbeComputeRequests = new List<CloudProbeComputeRequest>();
         private int cloudProbeShaderKernel;
         private readonly List<CloudProbeRequest> cloudProbeUserRequests = new List<CloudProbeRequest>();
         private readonly List<KeyValuePair<CloudProbeRequest, CloudProbeResult>> cloudProbeResults = new List<KeyValuePair<CloudProbeRequest, CloudProbeResult>>();
+        private readonly StringBuilder cloudProbeOverlayBuilder = new StringBuilder(1024);
+        private Texture2D cloudProbeOverlayBackground;
+        private GUIStyle cloudProbeOverlayStyle;
 
         private CommandBuffer weatherMapCommandBuffer;
 #if UNITY_URP
@@ -746,8 +770,6 @@ namespace DigitalRuby.WeatherMaker
                 AuroraProfile.UpdateAnimationProperties();
             }
 
-            CleanupCloudProbes();
-
             // debug only
             if (CloudRealtimeNoiseProfile != null)
             {
@@ -757,6 +779,8 @@ namespace DigitalRuby.WeatherMaker
 
         private void LateUpdate()
         {
+            CleanupCloudProbes();
+
             // ensure cover is 0 in case no one else sets it
             Shader.SetGlobalFloat(WMS._CloudCoverVolumetric, 0.0f);
             Shader.SetGlobalFloatArray(WMS._CloudCover, emptyFloatArray);
@@ -902,12 +926,17 @@ namespace DigitalRuby.WeatherMaker
             {
                 effect.Dispose();
             }
-            if (!WeatherMakerRenderBackendUtility.IsURP)
-            {
-                WeatherMapRenderTexture = WeatherMakerFullScreenEffect.DestroyRenderTexture(WeatherMapRenderTexture);
-                CloudShadowRenderTexture = WeatherMakerFullScreenEffect.DestroyRenderTexture(CloudShadowRenderTexture);
-            }
+            WeatherMapRenderTexture = WeatherMakerFullScreenEffect.DestroyRenderTexture(WeatherMapRenderTexture);
+            CloudShadowRenderTexture = WeatherMakerFullScreenEffect.DestroyRenderTexture(CloudShadowRenderTexture);
             weatherMapMaterialCopy.Dispose();
+            if (blackPixel != null)
+            {
+                GameObject.DestroyImmediate(blackPixel);
+            }
+            if (whitePixel != null)
+            {
+                GameObject.DestroyImmediate(whitePixel);
+            }
 
             DisposeCloudProbes();
 
@@ -1213,11 +1242,19 @@ namespace DigitalRuby.WeatherMaker
                 }
                 CloudProbeResult result = new CloudProbeResult
                 {
-                    DensitySource = samples[userRequestIndex].Source.x,
-                    DensityTarget = samples[userRequestIndex].Source.y,
-                    DensityRaySum = samples[userRequestIndex].Source.z,
-                    DensityRayAverage = samples[userRequestIndex].Source.z * oneOver64
+                    DensitySource = samples[userRequestIndex].Output.x,
+                    DensityTarget = samples[userRequestIndex].Output.y,
+                    DensityRaySum = samples[userRequestIndex].Output.z,
+                    DensityRayAverage = samples[userRequestIndex].Output.w
                 };
+                result.DebugString = string.Empty;
+                result.DebugString += samples[userRequestIndex].Output + Environment.NewLine;
+                result.DebugString += samples[userRequestIndex].Output2 + Environment.NewLine;
+                result.DebugString += samples[userRequestIndex].Output3 + Environment.NewLine;
+                result.DebugString += samples[userRequestIndex].Output4 + Environment.NewLine;
+                result.DebugString += samples[userRequestIndex].Output5 + Environment.NewLine;
+                result.DebugString += samples[userRequestIndex].Output6 + Environment.NewLine;
+
                 if (existingResultIndex == -1)
                 {
                     cloudProbeResults.Add(new KeyValuePair<CloudProbeRequest, CloudProbeResult>(request.UserRequests[userRequestIndex], result));
@@ -1275,61 +1312,70 @@ namespace DigitalRuby.WeatherMaker
                     return;
                 }
 
-                if (probeRequestPool.Count == 0)
+                foreach (var request in tempRequests)
                 {
-                    existingRequest = new CloudProbeComputeRequest();
-                }
-                else
-                {
+                    if (probeRequestPool.Count == 0)
+                    {
+                        existingRequest = new CloudProbeComputeRequest();
+                    }
+                    else
+                    {
+                        // lock for pool access
+                        lock (cloudProbeComputeRequests)
+                        {
+                            existingRequest = probeRequestPool[probeRequestPool.Count - 1];
+                            probeRequestPool.RemoveAt(probeRequestPool.Count - 1);
+                        }
+                        existingRequest.Reset();
+                    }
+
+                    ComputeBuffer computeBuffer = null;
+
                     // lock for pool access
                     lock (cloudProbeComputeRequests)
                     {
-                        existingRequest = probeRequestPool[probeRequestPool.Count - 1];
-                        probeRequestPool.RemoveAt(probeRequestPool.Count - 1);
-                    }
-                    existingRequest.Reset();
-                }
-
-                ComputeBuffer computeBuffer = null;
-
-                // lock for pool access
-                lock (cloudProbeComputeRequests)
-                {
-                    for (int i = computeBufferPool.Count - 1; i >= 0; i--)
-                    {
-                        if (computeBufferPool[i].count == tempRequests.Count)
+                        for (int i = computeBufferPool.Count - 1; i >= 0; i--)
                         {
-                            computeBuffer = computeBufferPool[i];
-                            computeBufferPool.RemoveAt(i);
-                            break;
+                            if (computeBufferPool[i].count == tempRequests.Count)
+                            {
+                                computeBuffer = computeBufferPool[i];
+                                computeBufferPool.RemoveAt(i);
+                                break;
+                            }
                         }
                     }
-                }
-                if (computeBuffer == null)
-                {
-                    computeBuffer = new ComputeBuffer(tempRequests.Count, 32);
-                }
-                existingRequest.Camera = camera;
-                existingRequest.UserRequests.AddRange(tempRequests);
-                existingRequest.Shader = cloudProbeShader;
-                existingRequest.Result = computeBuffer;
-                for (int i = 0; i < tempRequests.Count; i++)
-                {
+                    if (computeBuffer == null)
+                    {
+                        computeBuffer = new ComputeBuffer(computeBufferCount, Marshal.SizeOf<CloudProbe>());
+                    }
+                    existingRequest.Camera = camera;
+                    existingRequest.UserRequests.Add(request);
+                    existingRequest.Shader = cloudProbeShader;
+                    existingRequest.Result = computeBuffer;
+                    var src = (Vector4)request.Source.position;
+                    var tgt = (Vector4)request.Target.position;
+                    Vector3 viewportPoint = camera.WorldToViewportPoint(request.Target.position);
+                    Vector4 probeParams = request.Params;
+                    probeParams.y = viewportPoint.x;
+                    probeParams.z = viewportPoint.y;
+                    probeParams.w = viewportPoint.z;
                     existingRequest.SamplesList.Add(new CloudProbe
                     {
-                        Source = (tempRequests[i].Source == null ? Vector4.zero : (Vector4)tempRequests[i].Source.position),
-                        Target = (tempRequests[i].Target == null ? Vector4.zero : (Vector4)tempRequests[i].Target.position)
+                        Source = src,
+                        Target = tgt,
+                        Params = probeParams
                     });
-                }
-                existingRequest.Result.SetData(existingRequest.SamplesList);
+                    existingRequest.Result.SetData(existingRequest.SamplesList);
 
-                // lock for pool access
-                lock (cloudProbeComputeRequests)
-                {
-                    existingRequest.Shader.SetBuffer(cloudProbeShaderKernel, "probe", existingRequest.Result);
-                    existingRequest.Shader.Dispatch(cloudProbeShaderKernel, Mathf.CeilToInt(existingRequest.SamplesList.Count / 4.0f), 1, 1);
-                    cloudProbeComputeRequests.Add(existingRequest);
-                    existingRequest.Request = AsyncGPUReadback.Request(existingRequest.Result, handleCloudProbeResultCallback);
+                    // lock for pool access
+                    lock (cloudProbeComputeRequests)
+                    {
+                        Vector4 computeCameraPos = existingRequest.SamplesList[0].Source;
+                        existingRequest.Shader.SetBuffer(cloudProbeShaderKernel, "probe", existingRequest.Result);
+                        existingRequest.Shader.Dispatch(cloudProbeShaderKernel, computeBufferCount, 1, 1);
+                        cloudProbeComputeRequests.Add(existingRequest);
+                        existingRequest.Request = AsyncGPUReadback.Request(existingRequest.Result, handleCloudProbeResultCallback);
+                    }
                 }
             }
         }
@@ -1419,8 +1465,59 @@ namespace DigitalRuby.WeatherMaker
                 }
             }
 
-            cloudProbeUserRequests.Add(new CloudProbeRequest { Camera = camera, Source = source, Target = target });
+            Vector4 pms = Vector4.zero;
+            cloudProbeUserRequests.Add(new CloudProbeRequest
+            {
+                Camera = camera,
+                Source = source,
+                Target = target,
+                Params = pms
+            });
             return true;
+        }
+
+        private void OnGUI()
+        {
+            if (!ShowCloudProbeOverlay || cloudProbeResults.Count == 0)
+            {
+                return;
+            }
+
+            if (cloudProbeOverlayStyle == null)
+            {
+                cloudProbeOverlayStyle = new GUIStyle(GUI.skin.label)
+                {
+                    alignment = TextAnchor.UpperCenter,
+                    fontSize = 24,
+                    richText = false,
+                    wordWrap = true
+                };
+                cloudProbeOverlayStyle.normal.textColor = Color.white;
+            }
+            if (cloudProbeOverlayBackground == null)
+            {
+                cloudProbeOverlayBackground = new Texture2D(1, 1, TextureFormat.RGBA32, false);
+                cloudProbeOverlayBackground.SetPixel(0, 0, Color.black);
+                cloudProbeOverlayBackground.Apply();
+            }
+
+            cloudProbeOverlayBuilder.Length = 0;
+            cloudProbeOverlayBuilder.Append("Cloud Probe Results");
+            for (int i = 0; i < cloudProbeResults.Count; i++)
+            {
+                CloudProbeResult probe = cloudProbeResults[i].Value;
+                cloudProbeOverlayBuilder.AppendLine();
+                cloudProbeOverlayBuilder.Append(probe.DebugString);
+            }
+
+            GUIContent content = new GUIContent(cloudProbeOverlayBuilder.ToString());
+            float width = Mathf.Max(320.0f, Mathf.Min(Screen.width * 0.7f, 900.0f));
+            width *= 0.7f;
+            float height = cloudProbeOverlayStyle.CalcHeight(content, width);
+            Rect rect = new Rect((Screen.width - width) * 0.5f, Screen.height - height - 64.0f, width, height);
+            Rect backgroundRect = new Rect(rect.x - 16.0f, rect.y - 24.0f, rect.width + 32.0f, rect.height + 48.0f);
+            GUI.DrawTexture(backgroundRect, cloudProbeOverlayBackground, ScaleMode.StretchToFill);
+            GUI.Label(rect, content, cloudProbeOverlayStyle);
         }
 
         /// <summary>
@@ -1922,7 +2019,7 @@ namespace DigitalRuby.WeatherMaker
             currentRenderCloudProfile.CloudLayer4.CloudNoise = noise4Lerp.UpdateProgress(0.0f);
 
             // animate animatable properties
-            FloatTween tween = TweenFactory.Tween("WeatherMakerClouds_" + GetInstanceID() + tweenKey, 0.0f, 1.0f, transitionDuration, TweenScaleFunctions.QuadraticEaseInOut, (ITween<float> c) =>
+            FloatTween tween = TweenFactory.Tween("WeatherMakerClouds_" + GetEntityId() + tweenKey, 0.0f, 1.0f, transitionDuration, TweenScaleFunctions.QuadraticEaseInOut, (ITween<float> c) =>
             {
                 float progress = c.CurrentValue;
                 currentRenderCloudProfile.CloudLayer1.CloudNoiseScale.LastValue = Mathf.Lerp(startScale1, endScale1, progress);

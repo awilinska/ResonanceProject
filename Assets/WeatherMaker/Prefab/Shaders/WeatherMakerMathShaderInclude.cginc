@@ -1,4 +1,4 @@
-﻿//
+//
 // Weather Maker for Unity
 // (c) 2016 Digital Ruby, LLC
 // Source code may be used for personal or commercial projects.
@@ -500,12 +500,27 @@ float4x4 InverseMatrix(float4x4 input)
 	return transpose(cofactors) / determinant(input);
 }
 
-uint SetupPlanetRaymarch(float3 worldSpaceCameraPos, float3 rayDir, float depth, float depth2,
-	float4 surfaceSphereXYZRadSq, float4 innerSphereXYZRadSq, float4 outterSphereXYZRadSq,
-	out float3 startPos, out float3 endPos, out float rayLength, out float distanceToSphere,
-	out float3 startPos2, out float3 endPos2, out float rayLength2, out float distanceToSphere2)
+#ifndef WEATHER_MAKER_CLOUD_RAYMARCH_SETUP_RESULT_DEFINED
+#define WEATHER_MAKER_CLOUD_RAYMARCH_SETUP_RESULT_DEFINED
+struct CloudRaymarchSetupResult
 {
 	uint iterations;
+	float3 cloudRayDir;
+	float3 startPos;
+	float3 endPos;
+	float rayLength;
+	float distanceToSphere;
+	float3 startPos2;
+	float3 endPos2;
+	float rayLength2;
+	float distanceToSphere2;
+};
+#endif
+
+CloudRaymarchSetupResult SetupPlanetRaymarch(float3 worldSpaceCameraPos, float3 rayDir, float depth, float depth2,
+	float4 surfaceSphereXYZRadSq, float4 innerSphereXYZRadSq, float4 outterSphereXYZRadSq)
+{
+	CloudRaymarchSetupResult result = (CloudRaymarchSetupResult)0;
 
 	// intersect surface sphere and reduce depth if needed
 	float2 surfaceSphere = RaySphereIntersect(worldSpaceCameraPos, rayDir, depth, surfaceSphereXYZRadSq);
@@ -522,131 +537,131 @@ uint SetupPlanetRaymarch(float3 worldSpaceCameraPos, float3 rayDir, float depth,
 	float2 outterSphere = RaySphereIntersect(worldSpaceCameraPos, rayDir, depth, outterSphereXYZRadSq);
 
 	float intersectAmount = innerSphere.y;
-	distanceToSphere = innerSphere.x;
+	result.distanceToSphere = innerSphere.x;
 	float intersectAmount2 = outterSphere.y;
-	distanceToSphere2 = outterSphere.x;
+	result.distanceToSphere2 = outterSphere.x;
 
 	// we need to handle case where we are in the inner sphere, in the outter sphere and not in either sphere
 	UNITY_BRANCH
-	if (intersectAmount > 0.0 && distanceToSphere <= 0.0)
+	if (intersectAmount > 0.0 && result.distanceToSphere <= 0.0)
 	{
 		// we are inside the inner sphere, we can see both spheres
-		startPos = worldSpaceCameraPos + (rayDir * intersectAmount);
-		rayLength = intersectAmount2 - intersectAmount;
-		distanceToSphere = intersectAmount;
-		rayLength = min(depth - distanceToSphere, rayLength);
+		result.startPos = worldSpaceCameraPos + (rayDir * intersectAmount);
+		result.rayLength = intersectAmount2 - intersectAmount;
+		result.distanceToSphere = intersectAmount;
+		result.rayLength = min(depth - result.distanceToSphere, result.rayLength);
 
-		iterations = (rayLength > 0.01);
-		startPos2 = float3Zero;
-		rayLength2 = 0.0;
+		result.iterations = (result.rayLength > 0.01);
+		result.startPos2 = float3Zero;
+		result.rayLength2 = 0.0;
 	}
-	else if (intersectAmount2 > 0.0 && distanceToSphere2 <= 0.0)
+	else if (intersectAmount2 > 0.0 && result.distanceToSphere2 <= 0.0)
 	{
 		if (intersectAmount > 0.0)
 		{
 			// in outter sphere, ray hit both spheres
 			// first intersect in the outter sphere
-			rayLength = min(depth, distanceToSphere);
-			startPos = worldSpaceCameraPos;
-			iterations = (rayLength > 0.01);
+			result.rayLength = min(depth, result.distanceToSphere);
+			result.startPos = worldSpaceCameraPos;
+			result.iterations = (result.rayLength > 0.01);
 
 			// second intersect on backside of outter sphere
-			float ignoreRayLength = distanceToSphere + intersectAmount;
-			startPos2 = worldSpaceCameraPos + (rayDir * ignoreRayLength);
-			rayLength2 = min(depth2 - ignoreRayLength, (intersectAmount2 - ignoreRayLength));
-			iterations += (rayLength2 > 0.01);
+			float ignoreRayLength = result.distanceToSphere + intersectAmount;
+			result.startPos2 = worldSpaceCameraPos + (rayDir * ignoreRayLength);
+			result.rayLength2 = min(depth2 - ignoreRayLength, (intersectAmount2 - ignoreRayLength));
+			result.iterations += (result.rayLength2 > 0.01);
 
-			distanceToSphere2 = ignoreRayLength;
-			distanceToSphere = 0.0;
+			result.distanceToSphere2 = ignoreRayLength;
+			result.distanceToSphere = 0.0;
 		}
 		else
 		{
 			// else in outter sphere, ray missed inner sphere
-			startPos = worldSpaceCameraPos;
-			rayLength = min(depth, intersectAmount2);
-			iterations = (rayLength > 0.01);
-			distanceToSphere = 0.0;
-			startPos2 = float3Zero;
-			rayLength2 = 0.0;
+			result.startPos = worldSpaceCameraPos;
+			result.rayLength = min(depth, intersectAmount2);
+			result.iterations = (result.rayLength > 0.01);
+			result.distanceToSphere = 0.0;
+			result.startPos2 = float3Zero;
+			result.rayLength2 = 0.0;
 		}
 	}
 	else if (intersectAmount2 <= 0.0)
 	{
 		// we are outside the outter sphere and have no intersection with the outter sphere, nothing to do
-		startPos = float3Zero;
-		rayLength = 0.0;
-		startPos2 = float3Zero;
-		rayLength2 = 0.0;
-		iterations = 0;
+		result.startPos = float3Zero;
+		result.rayLength = 0.0;
+		result.startPos2 = float3Zero;
+		result.rayLength2 = 0.0;
+		result.iterations = 0;
 	}
 	else if (intersectAmount <= 0.0)
 	{
 		// we are outside the outter sphere and missed inner sphere, just calculate outter sphere intersect
-		startPos = rayDir * distanceToSphere2;
+		result.startPos = rayDir * result.distanceToSphere2;
 
 		// if depth buffer blocks, exit out
-		float startPosLength = length(startPos);
-		startPos += worldSpaceCameraPos;
-		rayLength = min(depth - startPosLength, intersectAmount2);
-		iterations = (rayLength > 0.01);
-		distanceToSphere = distanceToSphere2;
-		startPos2 = float3Zero;
-		rayLength2 = 0.0;
+		float startPosLength = length(result.startPos);
+		result.startPos += worldSpaceCameraPos;
+		result.rayLength = min(depth - startPosLength, intersectAmount2);
+		result.iterations = (result.rayLength > 0.01);
+		result.distanceToSphere = result.distanceToSphere2;
+		result.startPos2 = float3Zero;
+		result.rayLength2 = 0.0;
 	}
 	else
 	{
 		// we are outside the outter sphere and hit both spheres, start at outter sphere intersect point
-		startPos = rayDir * distanceToSphere2;
+		result.startPos = rayDir * result.distanceToSphere2;
 
 		// if depth buffer blocks, exit out
-		float startPosLength = length(startPos);
-		startPos += worldSpaceCameraPos;
-		rayLength = min(depth - startPosLength, (distanceToSphere - distanceToSphere2));
-		iterations = (rayLength > 0.01);
-		distanceToSphere = distanceToSphere2;
+		float startPosLength = length(result.startPos);
+		result.startPos += worldSpaceCameraPos;
+		result.rayLength = min(depth - startPosLength, (result.distanceToSphere - result.distanceToSphere2));
+		result.iterations = (result.rayLength > 0.01);
+		result.distanceToSphere = result.distanceToSphere2;
 
-		startPos2 = float3Zero;
-		rayLength2 = 0.0;
+		result.startPos2 = float3Zero;
+		result.rayLength2 = 0.0;
 	}
 
-	rayLength = lerp(min(rayLength, depth - distanceToSphere), rayLength, depth < distanceToSphere);
-	rayLength2 = lerp(min(rayLength2, depth - distanceToSphere2), rayLength2, depth < distanceToSphere2);
+	result.rayLength = lerp(min(result.rayLength, depth - result.distanceToSphere), result.rayLength, depth < result.distanceToSphere);
+	result.rayLength2 = lerp(min(result.rayLength2, depth - result.distanceToSphere2), result.rayLength2, depth < result.distanceToSphere2);
 
 	// set end pos to far away if blocked by depth buffer or depth buffer is beyond the sphere
-	endPos = lerp(startPos + (rayDir * rayLength), startPos + (rayDir * 1000000.0), depth < distanceToSphere || depth > distanceToSphere + rayLength);
-	endPos2 = lerp(startPos2 + (rayDir * rayLength2), startPos2 + (rayDir * 1000000.0), depth < distanceToSphere2 || depth > distanceToSphere2 + rayLength2);
+	result.endPos = lerp(result.startPos + (rayDir * result.rayLength), result.startPos + (rayDir * 1000000.0), depth < result.distanceToSphere || depth > result.distanceToSphere + result.rayLength);
+	result.endPos2 = lerp(result.startPos2 + (rayDir * result.rayLength2), result.startPos2 + (rayDir * 1000000.0), depth < result.distanceToSphere2 || depth > result.distanceToSphere2 + result.rayLength2);
 
-	return iterations;
+	return result;
 }
 
-uint SetupPlanetRaymarchBox(float3 worldSpaceCameraPos, float3 rayDir, float depth,	float2 yStartEnd,
-	out float3 startPos, out float3 endPos, out float rayLength, out float distanceToSphere,
-	out float3 startPos2, out float3 endPos2, out float rayLength2, out float distanceToSphere2)
+CloudRaymarchSetupResult SetupPlanetRaymarchBox(float3 worldSpaceCameraPos, float3 rayDir, float depth, float2 yStartEnd)
 {
+	CloudRaymarchSetupResult result = (CloudRaymarchSetupResult)0;
 	float3 boxMin = float3(worldSpaceCameraPos.x - 1000000.0, yStartEnd.x, worldSpaceCameraPos.z - 1000000.0);
 	float3 boxMax = float3(worldSpaceCameraPos.x + 1000000.0, yStartEnd.y, worldSpaceCameraPos.z + 1000000.0);
-	float hit = RayBoxIntersect(worldSpaceCameraPos, rayDir, depth, boxMin, boxMax, rayLength, distanceToSphere);
-	startPos = worldSpaceCameraPos + (rayDir * distanceToSphere);
-	endPos = startPos + (rayDir * rayLength);
-	startPos2 = float3Zero;
-	endPos2 = float3Zero;
-	rayLength2 = 0.0;
-	distanceToSphere2 = 0.0;
-	return uint(hit);
+	float hit = RayBoxIntersect(worldSpaceCameraPos, rayDir, depth, boxMin, boxMax, result.rayLength, result.distanceToSphere);
+	result.startPos = worldSpaceCameraPos + (rayDir * result.distanceToSphere);
+	result.endPos = result.startPos + (rayDir * result.rayLength);
+	result.startPos2 = float3Zero;
+	result.endPos2 = float3Zero;
+	result.rayLength2 = 0.0;
+	result.distanceToSphere2 = 0.0;
+	result.iterations = uint(hit);
+	return result;
 }
 
-uint SetupPlanetRaymarchBoxArea(float3 worldSpaceCameraPos, float3 rayDir, float depth, float3 boxMin, float3 boxMax,
-	out float3 startPos, out float3 endPos, out float rayLength, out float distanceToSphere,
-	out float3 startPos2, out float3 endPos2, out float rayLength2, out float distanceToSphere2)
+CloudRaymarchSetupResult SetupPlanetRaymarchBoxArea(float3 worldSpaceCameraPos, float3 rayDir, float depth, float3 boxMin, float3 boxMax)
 {
-	float hit = RayBoxIntersect(worldSpaceCameraPos, rayDir, depth, boxMin, boxMax, rayLength, distanceToSphere);
-	startPos = worldSpaceCameraPos + (rayDir * distanceToSphere);
-	endPos = startPos + (rayDir * rayLength);
-	startPos2 = float3Zero;
-	endPos2 = float3Zero;
-	rayLength2 = 0.0;
-	distanceToSphere2 = 0.0;
-	return uint(hit);
+	CloudRaymarchSetupResult result = (CloudRaymarchSetupResult)0;
+	float hit = RayBoxIntersect(worldSpaceCameraPos, rayDir, depth, boxMin, boxMax, result.rayLength, result.distanceToSphere);
+	result.startPos = worldSpaceCameraPos + (rayDir * result.distanceToSphere);
+	result.endPos = result.startPos + (rayDir * result.rayLength);
+	result.startPos2 = float3Zero;
+	result.endPos2 = float3Zero;
+	result.rayLength2 = 0.0;
+	result.distanceToSphere2 = 0.0;
+	result.iterations = uint(hit);
+	return result;
 }
 
 #endif

@@ -1,4 +1,12 @@
-﻿8.0.4 (2026-03-05)
+﻿8.0.6 (2026-04-27)
+- Move to URP 17.4 on Unity 6000.4 or newer.
+
+8.0.5 (2026-03-11)
+- Fix edge-case memory leaks.
+- Improve cloud probes.
+- Support SRP lens flares.
+
+8.0.4 (2026-03-05)
 - Crest 5.7 integration. See Window -> Weather Maker -> Integrations -> Crest.
 - Fog/cloud/atmosphere shadow and lighting fixes.
 

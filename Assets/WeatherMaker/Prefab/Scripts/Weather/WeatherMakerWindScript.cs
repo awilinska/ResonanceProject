@@ -154,7 +154,7 @@ namespace DigitalRuby.WeatherMaker
                 }
             }
 
-            FloatTween tween = TweenFactory.Tween("WeatherMakerWindScript_" + GetInstanceID(), 0.0f, 1.0f, transitionDuration, TweenScaleFunctions.Linear, (t) =>
+            FloatTween tween = TweenFactory.Tween("WeatherMakerWindScript_" + GetEntityId(), 0.0f, 1.0f, transitionDuration, TweenScaleFunctions.Linear, (t) =>
             {
                 WindIntensity = Mathf.Lerp(oldWindIntensity, newWindIntensity, t.CurrentValue);
                 WindZone.windTurbulence = Mathf.Lerp(oldTurbulence, newTurbulence, t.CurrentValue);

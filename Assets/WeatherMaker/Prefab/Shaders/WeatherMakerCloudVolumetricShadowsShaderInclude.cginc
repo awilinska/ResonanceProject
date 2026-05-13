@@ -1,4 +1,4 @@
-﻿// Weather Maker for Unity
+// Weather Maker for Unity
 // (c) 2016 Digital Ruby, LLC
 // Source code may be used for personal or commercial projects.
 // Source code may NOT be redistributed or sold.
@@ -19,6 +19,7 @@
 
 #include "WeatherMakerCloudShaderInclude.cginc"
 #include "WeatherMakerCloudVolumetricSamplingShaderInclude.cginc"
+#include "WeatherMakerCloudVolumetricRaymarchSetupShaderInclude.cginc"
 
 float ComputeCloudShadowDetails(float3 worldPos, uint dirIndex, float shadow, float lod)
 {
@@ -102,25 +103,19 @@ float ComputeCloudShadowStrength(float3 worldPos, uint dirIndex, float existingS
 #endif
 
 			{
-				float3 startPos, startPos2;
-				float3 endPos, endPos2;
-				float rayLength, rayLength2;
-				float distanceToSphere, distanceToSphere2;
-
 				// ensure a minimum amount of cloud intersection, don't want a horizontal ray
 				float rayY = max(0.015, rayDir.y);
 				float3 cloudRayDir = normalize(float3(rayDir.x, rayY, rayDir.z));
-				SetupCloudRaymarch(worldPos, cloudRayDir, 1000000.0, 0.0,
-					startPos, endPos, rayLength, distanceToSphere, startPos2, endPos2, rayLength2, distanceToSphere2);
+				CloudRaymarchSetupResult raymarchSetup = SetupCloudRaymarch(worldPos, cloudRayDir, 1000000.0, 0.0);
 
 				float cloudCoverage = 0.0;
-				float3 marchPos = startPos;
+				float3 marchPos = raymarchSetup.startPos;
 				float heightFrac;
 				float4 weatherData;
 				float cloudType;
 				float dither = RandomFloat(worldPos);
 				float randomDither = 1.0 + (_WeatherMakerCloudVolumetricShadowDither * dither);
-				float3 marchDir = rayDir * min(VOLUMETRIC_CLOUD_SHADOW_MAX_RAY_LENGTH, rayLength) * volumetricCloudShadowSampleCountInv;
+				float3 marchDir = rayDir * min(VOLUMETRIC_CLOUD_SHADOW_MAX_RAY_LENGTH, raymarchSetup.rayLength) * volumetricCloudShadowSampleCountInv;
 				marchPos += (marchDir * 0.15);
 				float samp;
 				bool sampled;

@@ -262,16 +262,12 @@ fixed4 ComputeAurora(float3 rayOrigin, float3 rayDir, float2 uv, float depth)
 	// uv = 4.0 * uv - 1.0; uv.x *= (_ScreenParams.x / _ScreenParams.y); return fixed4((auroraLineNoiseFbm(uv)).xxx, 1.0);
 
 	// use same ray match as clouds
-	float3 marchPos, marchPos2;
-	float3 endPos, endPos2;
-	float rayLength, rayLength2;
-	float distanceToSphere, distanceToSphere2;
-	uint iterations = SetupPlanetRaymarch(rayOrigin, rayDir, depth, depth, auroraSphereSurface, auroraSphereInner, auroraSphereOutter,
-		marchPos, endPos, rayLength, distanceToSphere, marchPos2, endPos2, rayLength2, distanceToSphere2);
+	CloudRaymarchSetupResult raymarchSetup = SetupPlanetRaymarch(rayOrigin, rayDir, depth, depth, auroraSphereSurface, auroraSphereInner, auroraSphereOutter);
+	uint iterations = raymarchSetup.iterations;
 
 	// miss aurora sphere, exit out
 	UNITY_BRANCH
-	if (iterations == 0 || rayLength < 0.1)
+	if (iterations == 0 || raymarchSetup.rayLength < 0.1)
 	{
 		return color;
 	}
@@ -281,7 +277,7 @@ fixed4 ComputeAurora(float3 rayOrigin, float3 rayDir, float2 uv, float depth)
 	for (uint iteration = 0; iteration < iterations; iteration++)
 	{
 		// if specified, fade aurora at distance
-		fixed distanceFadeMultiplier = lerp(1.0, 0.0, saturate((lerp(distanceToSphere, distanceToSphere2, iteration) - distFade) * invDistFade));
+		fixed distanceFadeMultiplier = lerp(1.0, 0.0, saturate((lerp(raymarchSetup.distanceToSphere, raymarchSetup.distanceToSphere2, iteration) - distFade) * invDistFade));
 
 		// distance fade check, if it is tiny, just exit out
 		UNITY_BRANCH
@@ -291,16 +287,16 @@ fixed4 ComputeAurora(float3 rayOrigin, float3 rayDir, float2 uv, float depth)
 		}
 
 		// pick our position based on which interation without branching
-		float3 pos = lerp(marchPos, marchPos2, iteration);
+		float3 pos = lerp(raymarchSetup.startPos, raymarchSetup.startPos2, iteration);
 
 		// as with volumetric clouds, banding can be reduced by perturbing the rayDir slightly
-		float dither = RandomFloat(marchPos);
+		float dither = RandomFloat(pos);
 		rayDir *= (1.0 + (dither * _WeatherMakerAuroraDither));
 
 		// additional dithering with start pos, similar to clouds
 		pos += (rayDir * (dither * ditherStartPos));
 
-		float3 marchDir = rayDir * lerp(rayLength, rayLength2, iteration) * invAuroraSampleCount;
+		float3 marchDir = rayDir * lerp(raymarchSetup.rayLength, raymarchSetup.rayLength2, iteration) * invAuroraSampleCount;
 		marchDir.y *= auroraMarchScale.y;
 		float3 origMarchDir = marchDir;
 		float2 scaledPos;

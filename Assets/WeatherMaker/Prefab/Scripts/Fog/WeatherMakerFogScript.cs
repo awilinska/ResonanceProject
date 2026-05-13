@@ -61,7 +61,7 @@ namespace DigitalRuby.WeatherMaker
             }
 
             FogProfile.FogDensity = fromDensity;
-            TweenFactory.Tween("WeatherMakerFog_" + GetInstanceID(), fromDensity, toDensity, transitionDuration, TweenScaleFunctions.Linear, (v) =>
+            TweenFactory.Tween("WeatherMakerFog_" + GetEntityId(), fromDensity, toDensity, transitionDuration, TweenScaleFunctions.Linear, (v) =>
             {
                 FogProfile.FogDensity = v.CurrentValue;
             }, (v) =>
@@ -142,7 +142,7 @@ namespace DigitalRuby.WeatherMaker
                 toProfileInstance.FogNoiseScale = transitionFromProfile.FogNoiseScale;
             }
 
-            FloatTween tween = TweenFactory.Tween("WeatherMakerFogScript_" + GetInstanceID() + tweenKey, 0.0f, 1.0f, transitionDuration, TweenScaleFunctions.Linear, (ITween<float> c) =>
+            FloatTween tween = TweenFactory.Tween("WeatherMakerFogScript_" + GetEntityId() + tweenKey, 0.0f, 1.0f, transitionDuration, TweenScaleFunctions.Linear, (ITween<float> c) =>
             {
                 float progress = c.CurrentValue;
                 toProfileInstance.FogDensity = Mathf.Lerp(oldFogDensity, newFogDensity, progress);

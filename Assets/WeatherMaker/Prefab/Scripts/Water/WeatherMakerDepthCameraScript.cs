@@ -116,7 +116,7 @@ namespace DigitalRuby.WeatherMaker
                 return;
             }
 
-            string cameraObjectName = name + "_YDepthBufferCamera_" + GetInstanceID();
+            string cameraObjectName = name + "_YDepthBufferCamera_" + GetEntityId();
             depthCameraGameObject = GameObject.Find(cameraObjectName);
             if (depthCameraGameObject == null)
             {

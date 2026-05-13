@@ -312,7 +312,7 @@ namespace DigitalRuby.WeatherMaker
                     {
                         // fade out
                         float start = AnimatedTextureRenderer.sharedMaterial.GetFloat(WMS._AlphaMultiplierAnimation2);
-                        TweenFactory.Tween("WeatherMakerPrecipitationAnimatedTextureChange_" + GetInstanceID(), start, 0.0f, duration, TweenScaleFunctions.Linear, (t) =>
+                        TweenFactory.Tween("WeatherMakerPrecipitationAnimatedTextureChange_" + GetEntityId(), start, 0.0f, duration, TweenScaleFunctions.Linear, (t) =>
                         {
                             // Debug.LogFormat("Tween key: {0}, value: {1}, prog: {2}", t.Key, t.CurrentValue, t.CurrentProgress);
                             AnimatedTextureRenderer.sharedMaterial.SetFloat(WMS._AlphaMultiplierAnimation2, t.CurrentValue);
@@ -342,7 +342,7 @@ namespace DigitalRuby.WeatherMaker
                         float start = AnimatedTextureRenderer.sharedMaterial.GetFloat(WMS._AlphaMultiplierAnimation2);
 
                         // fade in
-                        TweenFactory.Tween("WeatherMakerPrecipitationAnimatedTextureChange_" + GetInstanceID(), start, 1.0f, duration, TweenScaleFunctions.Linear, (t) =>
+                        TweenFactory.Tween("WeatherMakerPrecipitationAnimatedTextureChange_" + GetEntityId(), start, 1.0f, duration, TweenScaleFunctions.Linear, (t) =>
                         {
                             // Debug.LogFormat("Tween key: {0}, value: {1}, prog: {2}", t.Key, t.CurrentValue, t.CurrentProgress);
                             AnimatedTextureRenderer.sharedMaterial.SetFloat(WMS._AlphaMultiplierAnimation2, t.CurrentValue);

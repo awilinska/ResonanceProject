@@ -2,7 +2,7 @@
 https://www.digitalruby.com
 Created by Jeff Johnson
 
-Current Version : 8.0.4
+Current Version : 8.0.6
 
 *** IMPORTANT ***
 *** Please delete any existing Weather Maker folder and re-add everything from scratch if you are upgrading from earlier than 5.0.0 version. ***

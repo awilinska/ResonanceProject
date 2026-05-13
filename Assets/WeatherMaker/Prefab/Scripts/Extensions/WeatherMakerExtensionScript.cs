@@ -49,7 +49,7 @@ namespace DigitalRuby.WeatherMaker
                 {
                     System.Type type = typeof(T);
 #if UNITY_6000_0_OR_NEWER
-                    TypeScript = UnityEngine.Object.FindFirstObjectByType(type) as T;
+                    TypeScript = UnityEngine.Object.FindAnyObjectByType(type) as T;
 #else
                     TypeScript = UnityEngine.GameObject.FindObjectOfType(type) as T;
 #endif

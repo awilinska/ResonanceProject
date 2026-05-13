@@ -105,10 +105,32 @@ namespace DigitalRuby.WeatherMaker
         [Tooltip("Game object to use as lens flare cloud probe target. This object should have a cloud probe script on it.")]
         public Transform FlareCloudProbeTarget;
 
+        /// <summary>Minimum Y ray to show flare. This is used to block the flare when the sun is near the horizon and the flare would be very large and look bad.</summary>
+        [Tooltip("Minimum Y ray to show flare. This is used to block the flare when the sun is near the horizon and the flare would be very large and look bad.")]
+        [Range(0.0f, 1.0f)]
+        public float MinYRayToShowFlare = 0.15f;
+
         /// <summary>Minimum cloud cover to block the lens flare.</summary>
         [Tooltip("Minimum cloud cover to block the lens flare.")]
         [Range(0.0f, 1.0f)]
         public float MinimumCloudCoverToBlockLensFlare = 0.5f;
+
+#if UNITY_URP
+        /// <summary>Maximum cloud cover to fully dim the SRP lens flare.</summary>
+        [Tooltip("Maximum cloud cover to fully dim the SRP lens flare.")]
+        [Range(0.0f, 1.0f)]
+        public float MaximumCloudCoverToBlockLensFlare = 1.0f;
+
+        /// <summary>Minimum SRP flare intensity when fully blocked by clouds.</summary>
+        [Tooltip("Minimum SRP flare intensity when fully blocked by clouds.")]
+        [Range(0.0f, 10.0f)]
+        public float FlareMinimumIntensity = 0.0f;
+
+        /// <summary>Maximum SRP flare intensity when not blocked by clouds.</summary>
+        [Tooltip("Maximum SRP flare intensity when not blocked by clouds.")]
+        [Range(0.0f, 10.0f)]
+        public float FlareMaximumIntensity = 1.0f;
+#endif
 
         /// <summary>
         /// The light for this celestial object
@@ -130,10 +152,17 @@ namespace DigitalRuby.WeatherMaker
         /// </summary>
         public Collider Collider { get; private set; }
 
+#if UNITY_URP
+        /// <summary>
+        /// SRP lens flare (if any) for this celestial object
+        /// </summary>
+        public UnityEngine.Rendering.LensFlareComponentSRP FlareSRP { get; private set; }
+#else
         /// <summary>
         /// Lens flare (if any) for this celestial object
         /// </summary>
         public LensFlare Flare { get; private set; }
+#endif
 
         /// <summary>
         /// Difference (0-1) of light from last frame. A value of 1 indicates enough difference that shaders should completely re-render.
@@ -243,7 +272,12 @@ namespace DigitalRuby.WeatherMaker
             {
                 WeatherMakerCommandBufferManagerScript.Instance.RegisterPreCull(CameraPreCull, this);
             }
+            
+#if UNITY_URP
+            FlareSRP = GetComponent<UnityEngine.Rendering.LensFlareComponentSRP>();
+#else
             Flare = GetComponent<LensFlare>();
+#endif
         }
 
         private void OnDestroy()
@@ -256,27 +290,52 @@ namespace DigitalRuby.WeatherMaker
 
         private void CameraPreCull(Camera camera)
         {
-            if (Flare == null || !Flare.enabled || LensFlareBlocker == null || WeatherMakerFullScreenCloudsScript.Instance == null || WeatherMakerFullScreenCloudsScript.Instance.CloudProfile == null ||
-                WeatherMakerCommandBufferManagerScript.CameraStackCount > 1 || MinimumCloudCoverToBlockLensFlare <= 0.0f)
-            {
-                return;
-            }
-            LensFlareBlocker.transform.position = camera.transform.position + (transform.forward * Mathf.Min(1000.0f, camera.farClipPlane) * -0.9f);
+            bool hasFlare =
+#if UNITY_URP
+                (FlareSRP != null && FlareSRP.enabled);
+#else
+                (Flare != null && Flare.enabled);
+#endif
 
-            if (WeatherMakerFullScreenCloudsScript.CloudProbeEnabled && WeatherMakerFullScreenCloudsScript.Instance != null && FlareCloudProbeTarget != null && SystemInfo.supportsComputeShaders)
+#if UNITY_URP
+            if (hasFlare)
             {
+                FlareSRP.intensity = FlareMaximumIntensity;
+            }
+#endif
+
+            bool sample = hasFlare && WeatherMakerFullScreenCloudsScript.Instance != null && WeatherMakerFullScreenCloudsScript.Instance.CloudProfile != null &&
+                WeatherMakerCommandBufferManagerScript.CameraStackCount <= 1 && MinimumCloudCoverToBlockLensFlare > 0.0f;
+            float cloudDensity = 0.0f;
+
+            if (sample)
+            {
+                if (WeatherMakerFullScreenCloudsScript.CloudProbeEnabled && FlareCloudProbeTarget != null && SystemInfo.supportsComputeShaders)
+                {
+                    FlareCloudProbeTarget.transform.position = camera.transform.position + (transform.forward * -100000.0f);
+                    WeatherMakerFullScreenCloudsScript.CloudProbeResult result = WeatherMakerFullScreenCloudsScript.Instance.GetCloudProbe(camera, camera.transform, FlareCloudProbeTarget.transform);
+                    cloudDensity = result.DensityRaySum;
+                }
+                else
+                {
+                    cloudDensity = WeatherMakerFullScreenCloudsScript.Instance.CloudProfile.CloudCoverTotal;
+                }
+
+#if UNITY_URP
+                if (cloudDensity > MinimumCloudCoverToBlockLensFlare)
+                {
+                    FlareSRP.intensity = FlareMaximumIntensity - (FlareMaximumIntensity - FlareMinimumIntensity) * (cloudDensity - MinimumCloudCoverToBlockLensFlare) / (MaximumCloudCoverToBlockLensFlare - MinimumCloudCoverToBlockLensFlare);
+                }
+#endif
+            }
+
+            if (LensFlareBlocker != null)
+            {
+                LensFlareBlocker.transform.position = camera.transform.position + (transform.forward * Mathf.Min(1000.0f, camera.farClipPlane) * -0.9f);
                 FlareCloudProbeTarget.transform.position = camera.transform.position + (transform.forward * -100000.0f);
-                WeatherMakerFullScreenCloudsScript.CloudProbeResult result = WeatherMakerFullScreenCloudsScript.Instance.GetCloudProbe(camera, camera.transform, FlareCloudProbeTarget.transform);
-                LensFlareBlocker.SetActive(result.DensityRaySum > MinimumCloudCoverToBlockLensFlare);
+                bool lensFlareBlockerActive = cloudDensity > MinimumCloudCoverToBlockLensFlare || Mathf.Abs(transform.forward.y) < MinYRayToShowFlare;
+                LensFlareBlocker.SetActive(lensFlareBlockerActive);
                 //Debug.Log("Flare probe: " + result.DensityRayAverage);
-            }
-            else if (WeatherMakerFullScreenCloudsScript.Instance.CloudProfile.CloudCoverTotal < MinimumCloudCoverToBlockLensFlare)
-            {
-                LensFlareBlocker.SetActive(false);
-            }
-            else
-            {
-                LensFlareBlocker.SetActive(true);
             }
         }
 

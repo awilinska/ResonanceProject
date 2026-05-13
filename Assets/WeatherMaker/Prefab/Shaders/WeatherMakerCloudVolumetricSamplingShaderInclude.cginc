@@ -1,4 +1,4 @@
-﻿// Weather Maker for Unity
+// Weather Maker for Unity
 // (c) 2016 Digital Ruby, LLC
 // Source code may be used for personal or commercial projects.
 // Source code may NOT be redistributed or sold.
@@ -103,7 +103,7 @@ float GetCloudRoundness(float3 marchPos, float4 weatherData, float heightFrac)
 	}
 }
 
-float CloudNoiseSampleToCloudNoise(fixed4 noiseSample, float3 marchPos, float heightFrac, float coverage, float noiseMultiplier)
+float CloudNoiseSampleToCloudNoise(float4 noiseSample, float3 marchPos, float heightFrac, float coverage, float noiseMultiplier)
 {
 
 #define VOLUMETRIC_CLOUD_SAMPLE_REMAP
@@ -197,6 +197,11 @@ float SampleCloudDensity(float3 marchPos, float4 weatherData, float heightFrac, 
 {
 	bool sampled;
 	return SampleCloudDensity(marchPos, weatherData, heightFrac, lod, sampleDetails, sampled);
+}
+
+float ComputeVolumetricCloudStepAlpha(float accumulatedAlpha, float cloudSample)
+{
+	return (1.0 - accumulatedAlpha) * min(1.0, cloudSample);
 }
 
 static const float volumetricCameraHeightFrac = GetCloudHeightFractionForPoint(WEATHER_MAKER_CLOUD_CAMERA_POS);

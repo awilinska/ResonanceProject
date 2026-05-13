@@ -1163,6 +1163,16 @@ namespace DigitalRuby.WeatherMaker
                     }
                 }
 
+                // cleanup temporal states for destroyed cameras
+                for (int i = temporalStates.Count - 1; i >= 0; i--)
+                {
+                    if (temporalStates[i].Camera == null)
+                    {
+                        temporalStates[i].Dispose();
+                        temporalStates.RemoveAt(i);
+                    }
+                }
+
                 if (Enabled)
                 {
                     // setup temporal reprojection state

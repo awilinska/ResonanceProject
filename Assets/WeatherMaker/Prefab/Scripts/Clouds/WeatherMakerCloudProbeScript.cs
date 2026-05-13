@@ -45,12 +45,16 @@ namespace DigitalRuby.WeatherMaker
             {
                 WeatherMakerCommandBufferManagerScript.Instance.UnregisterPreCull(this);
             }
+            if (blackTexture != null)
+            {
+                DestroyImmediate(blackTexture);
+            }
         }
 
         private void CameraPreCull(Camera camera)
         {
             Transform source = (ProbeSourceIsCamera ? camera.transform : (ProbeSource == null ? transform : ProbeSource));
-            if (WeatherMakerFullScreenCloudsScript.Instance != null && source != null)
+            if (WeatherMakerFullScreenCloudsScript.Instance != null && source != null && ProbeDestination != null)
             {
                 WeatherMakerFullScreenCloudsScript.Instance.RequestCloudProbe(camera, source, ProbeDestination);
             }

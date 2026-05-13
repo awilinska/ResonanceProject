@@ -403,29 +403,6 @@ static const float4 volumetricWeatherMapBlurOffsets = float4
 	_WeatherMakerWeatherMapTexture_TexelSize.y * 1.2
 );
 
-uint SetupCloudRaymarch(float3 worldSpaceCameraPos, float3 rayDir, float depth, float depth2,
-	out float3 startPos, out float3 endPos, out float rayLength, out float distanceToSphere,
-	out float3 startPos2, out float3 endPos2, out float rayLength2, out float distanceToSphere2)
-{
-	UNITY_BRANCH
-	if (_CloudPlanetRadiusVolumetric > 0.0)
-	{
-		return SetupPlanetRaymarch(worldSpaceCameraPos, rayDir, depth, depth2, volumetricSphereSurface, volumetricSphereInner, volumetricSphereOutter,
-			startPos, endPos, rayLength, distanceToSphere, startPos2, endPos2, rayLength2, distanceToSphere2);
-	}
-	else if (_WeatherMakerCloudVolumetricWeatherMapRemapBoxMin.w == 0.0)
-	{
-		return SetupPlanetRaymarchBox(worldSpaceCameraPos, rayDir, depth, float2(_CloudStartVolumetric, _CloudEndVolumetric),
-			startPos, endPos, rayLength, distanceToSphere, startPos2, endPos2, rayLength2, distanceToSphere2);
-	}
-	else
-	{
-		// ray march through specified box using _WeatherMakerCloudVolumetricWeatherMapRemapBoxMin and _WeatherMakerCloudVolumetricWeatherMapRemapBoxMax
-		return SetupPlanetRaymarchBoxArea(worldSpaceCameraPos, rayDir, depth, _WeatherMakerCloudVolumetricWeatherMapRemapBoxMin,
-			_WeatherMakerCloudVolumetricWeatherMapRemapBoxMax, startPos, endPos, rayLength, distanceToSphere, startPos2, endPos2, rayLength2, distanceToSphere2);
-	}
-}
-
 // sample a curve of 16 values using t, a value of 0 to 1
 float SampleCurve(float t, const float curve[16])
 {
