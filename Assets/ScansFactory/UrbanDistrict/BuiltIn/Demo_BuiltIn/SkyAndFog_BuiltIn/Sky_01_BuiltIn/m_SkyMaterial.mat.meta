@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 8f66ed0e977fb7842a4be96c6c18d805
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 256451
+  packageName: Urban Abandoned District
+  packageVersion: 1.2
+  assetPath: Assets/ScansFactory/UrbanDistrict/BuiltIn/Demo_BuiltIn/SkyAndFog_BuiltIn/Sky_01_BuiltIn/m_SkyMaterial.mat
+  uploadId: 774897

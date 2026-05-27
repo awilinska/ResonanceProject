@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 7ca1eb3c00cc4b24ebf5cca4bb5e740d
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 256451
+  packageName: Urban Abandoned District
+  packageVersion: 1.2
+  assetPath: Assets/ScansFactory/UrbanDistrict/BuiltIn/Materials_BuiltIn/mi_Fence_01_03.mat
+  uploadId: 774897

@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: bc4417b954f00aa4c8555b511fd4a614
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 8574412962073106934
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 256451
+  packageName: Urban Abandoned District
+  packageVersion: 1.2
+  assetPath: Assets/ScansFactory/UrbanDistrict/BuiltIn/TerrainData_BuiltIn/Factory_01_Terrain_Layer_02.terrainlayer
+  uploadId: 774897

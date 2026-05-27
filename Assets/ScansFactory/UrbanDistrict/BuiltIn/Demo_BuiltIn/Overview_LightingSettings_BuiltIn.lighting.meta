@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: b4cc24b1bd4861c4cb7a1b385c5f1bbe
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 4890085278179872738
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 256451
+  packageName: Urban Abandoned District
+  packageVersion: 1.2
+  assetPath: Assets/ScansFactory/UrbanDistrict/BuiltIn/Demo_BuiltIn/Overview_LightingSettings_BuiltIn.lighting
+  uploadId: 774897

@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: bfeb605eaf44b2c45ba3cfbfe2a25a88
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 256451
+  packageName: Urban Abandoned District
+  packageVersion: 1.2
+  assetPath: Assets/ScansFactory/UrbanDistrict/BuiltIn/Materials_BuiltIn/mi_HexTile_01_01.mat
+  uploadId: 774897

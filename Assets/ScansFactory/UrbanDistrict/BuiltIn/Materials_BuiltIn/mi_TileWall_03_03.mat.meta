@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: fa3fb016550c08248ab7ae483ac1bad9
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 256451
+  packageName: Urban Abandoned District
+  packageVersion: 1.2
+  assetPath: Assets/ScansFactory/UrbanDistrict/BuiltIn/Materials_BuiltIn/mi_TileWall_03_03.mat
+  uploadId: 774897

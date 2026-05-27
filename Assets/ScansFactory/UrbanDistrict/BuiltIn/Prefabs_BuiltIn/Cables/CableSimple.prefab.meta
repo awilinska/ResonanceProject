@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: be5cce8dbf5ae3745a129fa859c6b308
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 256451
+  packageName: Urban Abandoned District
+  packageVersion: 1.2
+  assetPath: Assets/ScansFactory/UrbanDistrict/BuiltIn/Prefabs_BuiltIn/Cables/CableSimple.prefab
+  uploadId: 774897

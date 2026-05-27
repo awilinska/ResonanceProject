@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 940509d076eb08e40ac5c69a5a3a1417
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 256451
+  packageName: Urban Abandoned District
+  packageVersion: 1.2
+  assetPath: Assets/ScansFactory/UrbanDistrict/BuiltIn/Materials_BuiltIn/mi_GasCylinder_01_01.mat
+  uploadId: 774897

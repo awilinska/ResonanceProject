@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: d58a83d0ee65f5a4babb3396f0e0918e
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 256451
+  packageName: Urban Abandoned District
+  packageVersion: 1.2
+  assetPath: Assets/ScansFactory/UrbanDistrict/BuiltIn/Materials_BuiltIn/mi_Wall_06_06.mat
+  uploadId: 774897

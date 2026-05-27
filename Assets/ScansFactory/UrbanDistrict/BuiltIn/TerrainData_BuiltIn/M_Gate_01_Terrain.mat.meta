@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 6653e6dff2efa7046a5aad2491fc8d15
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 256451
+  packageName: Urban Abandoned District
+  packageVersion: 1.2
+  assetPath: Assets/ScansFactory/UrbanDistrict/BuiltIn/TerrainData_BuiltIn/M_Gate_01_Terrain.mat
+  uploadId: 774897

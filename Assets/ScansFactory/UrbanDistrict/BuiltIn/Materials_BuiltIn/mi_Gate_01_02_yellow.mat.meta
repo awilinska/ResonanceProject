@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: e33b5ab1c174471489086283d7f7106f
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 256451
+  packageName: Urban Abandoned District
+  packageVersion: 1.2
+  assetPath: Assets/ScansFactory/UrbanDistrict/BuiltIn/Materials_BuiltIn/mi_Gate_01_02_yellow.mat
+  uploadId: 774897
