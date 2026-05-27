@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: c0539febc9ae8ee4fbf2fa39ecb98a30
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 11400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 256451
+  packageName: Urban Abandoned District
+  packageVersion: 1.2
+  assetPath: Assets/ScansFactory/UrbanDistrict/URP/Demo_URP/URP_Settings/SampleSceneProfile.asset
+  uploadId: 774897

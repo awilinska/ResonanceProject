@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 8c32da53a1d1b674980793572de8fa1f
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 256451
+  packageName: Urban Abandoned District
+  packageVersion: 1.2
+  assetPath: Assets/ScansFactory/UrbanDistrict/URP/Materials_URP/mi_GarageDoor_01_05_white.mat
+  uploadId: 774897

@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: bfd6597a181f2bf478b1f56bd293608a
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 4890085278179872738
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 256451
+  packageName: Urban Abandoned District
+  packageVersion: 1.2
+  assetPath: Assets/ScansFactory/UrbanDistrict/URP/Demo_URP/UrbanDistrict_Lighting_URP.lighting
+  uploadId: 774897

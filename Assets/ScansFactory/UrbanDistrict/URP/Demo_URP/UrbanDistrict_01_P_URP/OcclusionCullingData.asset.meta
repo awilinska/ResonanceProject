@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 071ca978a39389b4a9749b07411f1826
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 36300000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 256451
+  packageName: Urban Abandoned District
+  packageVersion: 1.2
+  assetPath: Assets/ScansFactory/UrbanDistrict/URP/Demo_URP/UrbanDistrict_01_P_URP/OcclusionCullingData.asset
+  uploadId: 774897
