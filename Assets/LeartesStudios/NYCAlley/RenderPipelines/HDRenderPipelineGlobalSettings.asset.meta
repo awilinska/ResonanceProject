@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 0ba443f0a62d15c4a9010ade52223196
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 11400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 228679
+  packageName: 1970 s New York City Alley
+  packageVersion: 1.0
+  assetPath: Assets/LeartesStudios/NYCAlley/RenderPipelines/HDRenderPipelineGlobalSettings.asset
+  uploadId: 554881

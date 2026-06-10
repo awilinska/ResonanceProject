@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: 95e8ea187a78b5a44b091d0a670c468e
+ScriptedImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 2
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+  script: {fileID: 11500000, guid: 625f186215c104763be7675aa2d941aa, type: 3}
+AssetOrigin:
+  serializedVersion: 1
+  productId: 303625
+  packageName: French Quarter Street Environment
+  packageVersion: 1.0
+  assetPath: Assets/LeartesStudios/French_Quarter_Street/HDRP/Art/ShaderGraphs/S_Road_barrier.shadergraph
+  uploadId: 729342

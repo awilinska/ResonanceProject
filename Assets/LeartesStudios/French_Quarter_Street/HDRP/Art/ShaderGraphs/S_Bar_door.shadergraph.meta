@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: 8ffcb38bc49afbc419ba90106cb8291c
+ScriptedImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 2
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+  script: {fileID: 11500000, guid: 625f186215c104763be7675aa2d941aa, type: 3}
+AssetOrigin:
+  serializedVersion: 1
+  productId: 303625
+  packageName: French Quarter Street Environment
+  packageVersion: 1.0
+  assetPath: Assets/LeartesStudios/French_Quarter_Street/HDRP/Art/ShaderGraphs/S_Bar_door.shadergraph
+  uploadId: 729342

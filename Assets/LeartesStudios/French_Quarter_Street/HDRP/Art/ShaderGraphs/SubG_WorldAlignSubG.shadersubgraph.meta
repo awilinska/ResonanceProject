@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: 71be286cdf93d6d48ba3bd3fabee7d27
+ScriptedImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 2
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+  script: {fileID: 11500000, guid: 60072b568d64c40a485e0fc55012dc9f, type: 3}
+AssetOrigin:
+  serializedVersion: 1
+  productId: 303625
+  packageName: French Quarter Street Environment
+  packageVersion: 1.0
+  assetPath: Assets/LeartesStudios/French_Quarter_Street/HDRP/Art/ShaderGraphs/SubG_WorldAlignSubG.shadersubgraph
+  uploadId: 729342
