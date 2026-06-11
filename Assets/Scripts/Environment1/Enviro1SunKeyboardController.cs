@@ -1,85 +1,82 @@
+using Tenkoku.Core;
 using UnityEngine;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
 #endif
 
 /// <summary>
-/// Maps keyboard keys 1-9 to a smooth sun rotation range.
-/// 1 = noon (brightest / highest), 9 = evening / dark (near or below horizon).
+/// Maps keyboard keys 1-9 to Tenkoku hours from 09:00 through 18:00.
 /// </summary>
 public class Enviro1SunKeyboardController : MonoBehaviour
 {
-    [Header("Sun")]
-    [SerializeField] private Light directionalLight;
+    [Header("Tenkoku")]
+    [SerializeField] private TenkokuModule tenkokuModule;
+    [SerializeField] private bool stopAutomaticTime = true;
 
-    [Header("Rotation Range")]
-    [SerializeField] private Vector3 noonEuler = new Vector3(60f, -30f, 0f);
-    [SerializeField] private Vector3 eveningDarkEuler = new Vector3(-10f, -30f, 0f);
-
-    [Header("Smoothing")]
-    [SerializeField, Min(1f)] private float rotationSpeedDegreesPerSecond = 35f;
+    [Header("Hour Range")]
+    [SerializeField, Range(0, 23)] private int startHour = 9;
+    [SerializeField, Range(0, 23)] private int endHour = 18;
 
     [Header("State")]
     [SerializeField, Range(1, 9)] private int currentSlot = 1;
 
-    private Quaternion targetRotation;
-
     private void Awake()
     {
-        ResolveDirectionalLight();
+        ResolveTenkokuModule();
         currentSlot = Mathf.Clamp(currentSlot, 1, 9);
-        SetSlot(currentSlot, true);
+        SetSlot(currentSlot);
     }
 
     private void OnValidate()
     {
         currentSlot = Mathf.Clamp(currentSlot, 1, 9);
-        ResolveDirectionalLight();
-        targetRotation = GetRotationForSlot(currentSlot);
+        startHour = Mathf.Clamp(startHour, 0, 23);
+        endHour = Mathf.Clamp(endHour, 0, 23);
+        ResolveTenkokuModule();
     }
 
     private void Update()
     {
-        bool changed = false;
         for (int slot = 1; slot <= 9; slot++)
         {
             if (IsSlotPressed(slot))
             {
-                SetSlot(slot, false);
-                changed = true;
+                SetSlot(slot);
                 break;
             }
         }
+    }
 
-        if (!changed && directionalLight == null)
+    public void SetSlot(int slot)
+    {
+        currentSlot = Mathf.Clamp(slot, 1, 9);
+        if (tenkokuModule == null)
         {
+            Debug.LogWarning(
+                $"[{nameof(Enviro1SunKeyboardController)}] Assign a Tenkoku Module.",
+                this);
             return;
         }
 
-        if (directionalLight != null)
+        if (stopAutomaticTime)
         {
-            directionalLight.transform.rotation = Quaternion.RotateTowards(
-                directionalLight.transform.rotation,
-                targetRotation,
-                rotationSpeedDegreesPerSecond * Time.deltaTime);
+            tenkokuModule.useAutoTime = false;
+            tenkokuModule.autoTimeSync = false;
         }
+
+        float slotPosition = (currentSlot - 1f) / 8f;
+        tenkokuModule.currentHour = Mathf.RoundToInt(
+            Mathf.Lerp(startHour, endHour, slotPosition));
+        tenkokuModule.currentMinute = 0;
+        tenkokuModule.currentSecond = 0;
     }
 
-    public void SetSlot(int slot, bool snap)
+    private void ResolveTenkokuModule()
     {
-        currentSlot = Mathf.Clamp(slot, 1, 9);
-        targetRotation = GetRotationForSlot(currentSlot);
-
-        if (snap && directionalLight != null)
+        if (tenkokuModule == null)
         {
-            directionalLight.transform.rotation = targetRotation;
+            tenkokuModule = FindAnyObjectByType<TenkokuModule>();
         }
-    }
-
-    private Quaternion GetRotationForSlot(int slot)
-    {
-        float t = (Mathf.Clamp(slot, 1, 9) - 1f) / 8f;
-        return Quaternion.Euler(Vector3.Lerp(noonEuler, eveningDarkEuler, t));
     }
 
     private static bool IsSlotPressed(int slot)
@@ -123,26 +120,10 @@ public class Enviro1SunKeyboardController : MonoBehaviour
         bool numpadPressed = numpadKey != Key.None && keyboard[numpadKey].wasPressedThisFrame;
         return mainPressed || numpadPressed;
 #elif ENABLE_LEGACY_INPUT_MANAGER
-        return Input.GetKeyDown(KeyCode.Alpha0 + slot) || Input.GetKeyDown(KeyCode.Keypad0 + slot);
+        return Input.GetKeyDown(KeyCode.Alpha0 + slot) ||
+               Input.GetKeyDown(KeyCode.Keypad0 + slot);
 #else
         return false;
 #endif
-    }
-
-    private void ResolveDirectionalLight()
-    {
-        if (directionalLight != null)
-        {
-            return;
-        }
-
-        Light ownLight = GetComponent<Light>();
-        if (ownLight != null && ownLight.type == LightType.Directional)
-        {
-            directionalLight = ownLight;
-            return;
-        }
-
-        directionalLight = RenderSettings.sun;
     }
 }

@@ -1,20 +1,33 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
 #endif
 
 /// <summary>
-/// Spawns a flock of animated birds on B key press and moves them from spawn to end point.
+/// Spawns bird flocks on B key press using paired spawn and destination points.
 /// Each bird is destroyed once it reaches its destination.
 /// </summary>
 public class Enviro1BirdFlockController : MonoBehaviour
 {
+    [System.Serializable]
+    private sealed class RoutePair
+    {
+        public Transform SpawnPoint;
+        public Transform EndPoint;
+    }
+
     [Header("References")]
     [SerializeField] private GameObject birdPrefab;
-    [SerializeField] private Transform spawnPoint;
-    [SerializeField] private Transform endPoint;
+    [SerializeField] private List<RoutePair> routePairs = new List<RoutePair>();
     [SerializeField] private Transform runtimeParent;
+
+    [SerializeField, HideInInspector, FormerlySerializedAs("spawnPoint")]
+    private Transform legacySpawnPoint;
+
+    [SerializeField, HideInInspector, FormerlySerializedAs("endPoint")]
+    private Transform legacyEndPoint;
 
     [Header("Flock")]
     [SerializeField, Min(1)] private int birdsPerFlock = 8;
@@ -36,6 +49,16 @@ public class Enviro1BirdFlockController : MonoBehaviour
         public float Speed;
     }
 
+    private void Awake()
+    {
+        MigrateLegacyRoute();
+    }
+
+    private void OnValidate()
+    {
+        MigrateLegacyRoute();
+    }
+
     private void Update()
     {
         if (WasSpawnPressed())
@@ -48,13 +71,27 @@ public class Enviro1BirdFlockController : MonoBehaviour
 
     private void SpawnFlock()
     {
-        if (birdPrefab == null || spawnPoint == null || endPoint == null)
+        if (birdPrefab == null)
         {
             return;
         }
 
         EnsureRuntimeParent();
 
+        for (int routeIndex = 0; routeIndex < routePairs.Count; routeIndex++)
+        {
+            RoutePair route = routePairs[routeIndex];
+            if (route == null || route.SpawnPoint == null || route.EndPoint == null)
+            {
+                continue;
+            }
+
+            SpawnFlockOnRoute(route.SpawnPoint, route.EndPoint);
+        }
+    }
+
+    private void SpawnFlockOnRoute(Transform spawnPoint, Transform endPoint)
+    {
         for (int i = 0; i < birdsPerFlock; i++)
         {
             Vector3 spawnOffset = Random.insideUnitSphere * spawnRadius;
@@ -120,6 +157,53 @@ public class Enviro1BirdFlockController : MonoBehaviour
         runtimeParent = parent.transform;
     }
 
+    private void MigrateLegacyRoute()
+    {
+        if (routePairs == null)
+        {
+            routePairs = new List<RoutePair>();
+        }
+
+        if (legacySpawnPoint == null && legacyEndPoint == null)
+        {
+            return;
+        }
+
+        if (routePairs.Count == 0)
+        {
+            routePairs.Add(new RoutePair
+            {
+                SpawnPoint = legacySpawnPoint,
+                EndPoint = legacyEndPoint
+            });
+        }
+
+        legacySpawnPoint = null;
+        legacyEndPoint = null;
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        if (routePairs == null)
+        {
+            return;
+        }
+
+        Gizmos.color = Color.yellow;
+        for (int i = 0; i < routePairs.Count; i++)
+        {
+            RoutePair route = routePairs[i];
+            if (route == null || route.SpawnPoint == null || route.EndPoint == null)
+            {
+                continue;
+            }
+
+            Gizmos.DrawWireSphere(route.SpawnPoint.position, spawnRadius);
+            Gizmos.DrawLine(route.SpawnPoint.position, route.EndPoint.position);
+            Gizmos.DrawWireSphere(route.EndPoint.position, targetRadius);
+        }
+    }
+
     private static bool WasSpawnPressed()
     {
 #if ENABLE_INPUT_SYSTEM
@@ -132,4 +216,3 @@ public class Enviro1BirdFlockController : MonoBehaviour
 #endif
     }
 }
-

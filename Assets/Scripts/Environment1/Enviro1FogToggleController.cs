@@ -5,17 +5,23 @@ using UnityEngine.InputSystem;
 
 /// <summary>
 /// Toggles environment FX objects by keyboard:
-/// F = fog, R = rain, S = storm (rain + lightning).
+/// F = fire, G = fog, R = rain, S = storm (rain + lightning), W = wind.
 /// </summary>
 public class Enviro1FogToggleController : MonoBehaviour
 {
     [Header("Targets")]
+    [SerializeField] private GameObject fireObject;
     [SerializeField] private GameObject fogObject;
     [SerializeField] private GameObject rainObject;
     [SerializeField] private GameObject lightningObject;
+    [SerializeField] private GameObject windObject;
 
     private void Start()
     {
+        if (fireObject == null)
+        {
+            Debug.LogWarning("[Enviro1FogToggleController] Fire Object is not assigned.");
+        }
         if (fogObject == null)
         {
             Debug.LogWarning("[Enviro1FogToggleController] Fog Object is not assigned.");
@@ -28,10 +34,22 @@ public class Enviro1FogToggleController : MonoBehaviour
         {
             Debug.LogWarning("[Enviro1FogToggleController] Lightning Object is not assigned.");
         }
+        if (windObject == null)
+        {
+            Debug.LogWarning("[Enviro1FogToggleController] Wind Object is not assigned.");
+        }
     }
 
     private void Update()
     {
+        if (WasFireTogglePressed() &&
+            fireObject != null &&
+            !fireObject.activeSelf &&
+            (rainObject == null || !rainObject.activeSelf))
+        {
+            fireObject.SetActive(true);
+        }
+
         if (WasFogTogglePressed() && fogObject != null)
         {
             fogObject.SetActive(!fogObject.activeSelf);
@@ -39,18 +57,31 @@ public class Enviro1FogToggleController : MonoBehaviour
 
         if (WasRainTogglePressed() && rainObject != null)
         {
-            rainObject.SetActive(!rainObject.activeSelf);
+            bool nextRainState = !rainObject.activeSelf;
+            rainObject.SetActive(nextRainState);
+
+            if (nextRainState)
+            {
+                TurnOffFire();
+            }
         }
 
         if (WasStormTogglePressed())
         {
             ToggleStorm();
         }
+
+        if (WasWindTogglePressed() && windObject != null)
+        {
+            windObject.SetActive(!windObject.activeSelf);
+        }
     }
 
+    public void SetFireObject(GameObject target) => fireObject = target;
     public void SetFogObject(GameObject target) => fogObject = target;
     public void SetRainObject(GameObject target) => rainObject = target;
     public void SetLightningObject(GameObject target) => lightningObject = target;
+    public void SetWindObject(GameObject target) => windObject = target;
 
     private void ToggleStorm()
     {
@@ -66,15 +97,40 @@ public class Enviro1FogToggleController : MonoBehaviour
         {
             lightningObject.SetActive(nextState);
         }
+
+        if (nextState)
+        {
+            TurnOffFire();
+        }
     }
 
-    private static bool WasFogTogglePressed()
+    private void TurnOffFire()
+    {
+        if (fireObject != null && fireObject.activeSelf)
+        {
+            fireObject.SetActive(false);
+        }
+    }
+
+    private static bool WasFireTogglePressed()
     {
 #if ENABLE_INPUT_SYSTEM
         Keyboard keyboard = Keyboard.current;
         return keyboard != null && keyboard.fKey.wasPressedThisFrame;
 #elif ENABLE_LEGACY_INPUT_MANAGER
         return Input.GetKeyDown(KeyCode.F);
+#else
+        return false;
+#endif
+    }
+
+    private static bool WasFogTogglePressed()
+    {
+#if ENABLE_INPUT_SYSTEM
+        Keyboard keyboard = Keyboard.current;
+        return keyboard != null && keyboard.gKey.wasPressedThisFrame;
+#elif ENABLE_LEGACY_INPUT_MANAGER
+        return Input.GetKeyDown(KeyCode.G);
 #else
         return false;
 #endif
@@ -99,6 +155,18 @@ public class Enviro1FogToggleController : MonoBehaviour
         return keyboard != null && keyboard.sKey.wasPressedThisFrame;
 #elif ENABLE_LEGACY_INPUT_MANAGER
         return Input.GetKeyDown(KeyCode.S);
+#else
+        return false;
+#endif
+    }
+
+    private static bool WasWindTogglePressed()
+    {
+#if ENABLE_INPUT_SYSTEM
+        Keyboard keyboard = Keyboard.current;
+        return keyboard != null && keyboard.wKey.wasPressedThisFrame;
+#elif ENABLE_LEGACY_INPUT_MANAGER
+        return Input.GetKeyDown(KeyCode.W);
 #else
         return false;
 #endif
