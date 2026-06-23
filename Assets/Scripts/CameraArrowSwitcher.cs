@@ -10,6 +10,11 @@ public class CameraArrowSwitcher : MonoBehaviour
     [SerializeField] private Camera[] cameras;
     [SerializeField, Min(0)] private int startingCameraIndex;
 
+    [Header("Split View")]
+    [SerializeField] private bool includeSplitView = true;
+
+    private Rect[] originalCameraRects;
+    private AudioListener[] cameraAudioListeners;
     private int currentCameraIndex;
 
     private void Awake()
@@ -23,6 +28,7 @@ public class CameraArrowSwitcher : MonoBehaviour
             return;
         }
 
+        CacheCameraState();
         currentCameraIndex = FindValidCameraIndex(startingCameraIndex, 1);
         if (currentCameraIndex < 0)
         {
@@ -70,15 +76,16 @@ public class CameraArrowSwitcher : MonoBehaviour
 
     private int FindValidCameraIndex(int startIndex, int direction)
     {
-        if (cameras == null || cameras.Length == 0)
+        int viewCount = GetViewCount();
+        if (viewCount == 0)
         {
             return -1;
         }
 
         int index = WrapIndex(startIndex);
-        for (int i = 0; i < cameras.Length; i++)
+        for (int i = 0; i < viewCount; i++)
         {
-            if (cameras[index] != null)
+            if (IsValidViewIndex(index))
             {
                 return index;
             }
@@ -91,18 +98,105 @@ public class CameraArrowSwitcher : MonoBehaviour
 
     private void ActivateCamera(int activeIndex)
     {
+        bool isSplitView = IsSplitViewIndex(activeIndex);
+        int splitCameraCount = isSplitView ? GetAssignedCameraCount() : 0;
+        int splitCameraIndex = 0;
+
         for (int i = 0; i < cameras.Length; i++)
         {
             if (cameras[i] != null)
             {
-                cameras[i].gameObject.SetActive(i == activeIndex);
+                bool isActive = isSplitView || i == activeIndex;
+                cameras[i].gameObject.SetActive(isActive);
+                cameras[i].rect =
+                    isSplitView
+                        ? GetSplitViewport(splitCameraIndex++, splitCameraCount)
+                        : originalCameraRects[i];
+
+                if (cameraAudioListeners[i] != null)
+                {
+                    cameraAudioListeners[i].enabled =
+                        isActive && (!isSplitView || splitCameraIndex == 1);
+                }
             }
         }
     }
 
     private int WrapIndex(int index)
     {
-        return (index % cameras.Length + cameras.Length) % cameras.Length;
+        int viewCount = GetViewCount();
+        return (index % viewCount + viewCount) % viewCount;
+    }
+
+    private void CacheCameraState()
+    {
+        originalCameraRects = new Rect[cameras.Length];
+        cameraAudioListeners = new AudioListener[cameras.Length];
+
+        for (int i = 0; i < cameras.Length; i++)
+        {
+            if (cameras[i] == null)
+            {
+                continue;
+            }
+
+            originalCameraRects[i] = cameras[i].rect;
+            cameraAudioListeners[i] = cameras[i].GetComponent<AudioListener>();
+        }
+    }
+
+    private int GetViewCount()
+    {
+        int cameraCount = cameras != null ? cameras.Length : 0;
+        return cameraCount + (HasSplitView() ? 1 : 0);
+    }
+
+    private bool IsValidViewIndex(int index)
+    {
+        if (IsSplitViewIndex(index))
+        {
+            return true;
+        }
+
+        return cameras != null &&
+               index >= 0 &&
+               index < cameras.Length &&
+               cameras[index] != null;
+    }
+
+    private bool IsSplitViewIndex(int index)
+    {
+        return HasSplitView() && index == cameras.Length;
+    }
+
+    private bool HasSplitView()
+    {
+        return includeSplitView && GetAssignedCameraCount() > 1;
+    }
+
+    private int GetAssignedCameraCount()
+    {
+        if (cameras == null)
+        {
+            return 0;
+        }
+
+        int assignedCameraCount = 0;
+        for (int i = 0; i < cameras.Length; i++)
+        {
+            if (cameras[i] != null)
+            {
+                assignedCameraCount++;
+            }
+        }
+
+        return assignedCameraCount;
+    }
+
+    private static Rect GetSplitViewport(int index, int count)
+    {
+        float width = 1f / Mathf.Max(1, count);
+        return new Rect(width * index, 0f, width, 1f);
     }
 
     private static bool WasRightArrowPressed()

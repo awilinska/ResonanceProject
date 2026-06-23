@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 #if ENABLE_INPUT_SYSTEM
@@ -32,9 +33,30 @@ public class CityPeopleSpawner : MonoBehaviour
     [SerializeField, Min(0.1f)] private float personColliderHeight = 1.8f;
     [SerializeField, Min(0.05f)] private float personColliderRadius = 0.3f;
 
+    [Header("Fire Response")]
+    [SerializeField] private Transform environmentRoot;
+    [SerializeField] private GameObject[] fireObjects;
+    [SerializeField, Min(1f)] private float fireMovementMultiplier = 3f;
+    [SerializeField, Min(0f)] private float minimumFireDestroyDelay = 2f;
+    [SerializeField, Min(0f)] private float maximumFireDestroyDelay = 6f;
+
+    [Header("Rain Response")]
+    [SerializeField] private GameObject[] rainObjects;
+    [SerializeField] private GameObject[] stormObjects;
+    [SerializeField] private Color wetColor = new Color(0.65f, 0.8f, 1f, 1f);
+    [SerializeField, Min(0f)] private float minimumWetRestoreDelay = 1f;
+    [SerializeField, Min(0f)] private float maximumWetRestoreDelay = 4f;
+
+    [Header("Input")]
+#if ENABLE_INPUT_SYSTEM
+    [SerializeField] private Key spawnKey = Key.P;
+#elif ENABLE_LEGACY_INPUT_MANAGER
+    [SerializeField] private KeyCode spawnKey = KeyCode.P;
+#endif
+
     private void Update()
     {
-        if (WasSpawnPressed())
+        if (WasSpawnKeyPressed())
         {
             SpawnPerson();
         }
@@ -125,6 +147,20 @@ public class CityPeopleSpawner : MonoBehaviour
             carHitUpwardForce,
             carHitTorque,
             hitPersonDestroyDelay);
+
+        Transform resolvedEnvironmentRoot =
+            environmentRoot != null ? environmentRoot : area.transform.root;
+        wander.ConfigureEnvironmentResponse(
+            resolvedEnvironmentRoot,
+            ResolveEnvironmentObjects(resolvedEnvironmentRoot, fireObjects, "Fire"),
+            fireMovementMultiplier,
+            minimumFireDestroyDelay,
+            maximumFireDestroyDelay,
+            ResolveEnvironmentObjects(resolvedEnvironmentRoot, rainObjects, "Rain"),
+            ResolveEnvironmentObjects(resolvedEnvironmentRoot, stormObjects, "Storm"),
+            wetColor,
+            minimumWetRestoreDelay,
+            maximumWetRestoreDelay);
     }
 
     private GameObject GetRandomPrefab()
@@ -220,13 +256,49 @@ public class CityPeopleSpawner : MonoBehaviour
                Mathf.Abs(localPoint.z) <= halfSize.z;
     }
 
-    private static bool WasSpawnPressed()
+    private GameObject[] ResolveEnvironmentObjects(
+        Transform resolvedEnvironmentRoot,
+        GameObject[] configuredObjects,
+        string objectName)
+    {
+        if (configuredObjects != null && configuredObjects.Length > 0)
+        {
+            return configuredObjects;
+        }
+
+        if (resolvedEnvironmentRoot == null)
+        {
+            return new GameObject[0];
+        }
+
+        List<GameObject> resolvedObjects = new List<GameObject>();
+        Transform[] children =
+            resolvedEnvironmentRoot.GetComponentsInChildren<Transform>(true);
+        for (int i = 0; i < children.Length; i++)
+        {
+            Transform child = children[i];
+            if (child != null &&
+                string.Equals(
+                    child.name,
+                    objectName,
+                    System.StringComparison.OrdinalIgnoreCase))
+            {
+                resolvedObjects.Add(child.gameObject);
+            }
+        }
+
+        return resolvedObjects.ToArray();
+    }
+
+    private bool WasSpawnKeyPressed()
     {
 #if ENABLE_INPUT_SYSTEM
         Keyboard keyboard = Keyboard.current;
-        return keyboard != null && keyboard.pKey.wasPressedThisFrame;
+        return keyboard != null &&
+               spawnKey != Key.None &&
+               keyboard[spawnKey].wasPressedThisFrame;
 #elif ENABLE_LEGACY_INPUT_MANAGER
-        return Input.GetKeyDown(KeyCode.P);
+        return spawnKey != KeyCode.None && Input.GetKeyDown(spawnKey);
 #else
         return false;
 #endif

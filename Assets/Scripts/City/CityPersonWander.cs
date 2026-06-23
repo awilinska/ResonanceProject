@@ -5,9 +5,13 @@ using UnityEngine.AI;
 [DisallowMultipleComponent]
 public class CityPersonWander : MonoBehaviour
 {
+    private static readonly int BaseColorProperty = Shader.PropertyToID("_BaseColor");
+    private static readonly int ColorProperty = Shader.PropertyToID("_Color");
+
     private BoxCollider wanderArea;
     private NavMeshAgent agent;
     private bool useNavMesh;
+    private float baseMovementSpeed;
     private float movementSpeed;
     private int sampleAttempts;
     private float sampleDistance;
@@ -18,10 +22,31 @@ public class CityPersonWander : MonoBehaviour
     private float carHitUpwardForce;
     private float carHitTorque;
     private float hitPersonDestroyDelay;
+    private Transform environmentRoot;
+    private GameObject[] fireObjects;
+    private GameObject[] rainObjects;
+    private GameObject[] stormObjects;
+    private float fireMovementMultiplier;
+    private float minimumFireDestroyDelay;
+    private float maximumFireDestroyDelay;
+    private Color wetColor;
+    private float minimumWetRestoreDelay;
+    private float maximumWetRestoreDelay;
     private Vector3 directDestination;
     private bool isConfigured;
     private bool isWaiting;
     private bool wasHitByCar;
+    private bool firePanicStarted;
+    private bool wetTintActive;
+    private Coroutine fireDestroyCoroutine;
+    private Coroutine wetRestoreCoroutine;
+    private RendererTintState[] originalRendererTintStates;
+
+    private struct RendererTintState
+    {
+        public Renderer Renderer;
+        public MaterialPropertyBlock PropertyBlock;
+    }
 
     private void Awake()
     {
@@ -44,7 +69,8 @@ public class CityPersonWander : MonoBehaviour
     {
         wanderArea = newWanderArea;
         useNavMesh = newUseNavMesh;
-        movementSpeed = Mathf.Max(0.1f, newMovementSpeed);
+        baseMovementSpeed = Mathf.Max(0.1f, newMovementSpeed);
+        movementSpeed = baseMovementSpeed;
         sampleAttempts = Mathf.Max(1, newSampleAttempts);
         sampleDistance = Mathf.Max(0.1f, newSampleDistance);
         minimumWaitTime = Mathf.Max(0f, Mathf.Min(newMinimumWaitTime, newMaximumWaitTime));
@@ -61,6 +87,10 @@ public class CityPersonWander : MonoBehaviour
         }
         isConfigured = wanderArea != null;
         wasHitByCar = false;
+        firePanicStarted = false;
+        wetTintActive = false;
+        fireDestroyCoroutine = null;
+        wetRestoreCoroutine = null;
 
         if (isConfigured)
         {
@@ -68,9 +98,66 @@ public class CityPersonWander : MonoBehaviour
         }
     }
 
+    public void ConfigureEnvironmentResponse(
+        Transform newEnvironmentRoot,
+        GameObject[] newFireObjects,
+        float newFireMovementMultiplier,
+        float newMinimumFireDestroyDelay,
+        float newMaximumFireDestroyDelay,
+        GameObject[] newRainObjects,
+        GameObject[] newStormObjects,
+        Color newWetColor,
+        float newMinimumWetRestoreDelay,
+        float newMaximumWetRestoreDelay)
+    {
+        environmentRoot =
+            newEnvironmentRoot != null
+                ? newEnvironmentRoot
+                : wanderArea != null
+                    ? wanderArea.transform.root
+                    : null;
+        fireObjects = newFireObjects;
+        rainObjects = newRainObjects;
+        stormObjects = newStormObjects;
+        fireMovementMultiplier = Mathf.Max(1f, newFireMovementMultiplier);
+        minimumFireDestroyDelay = Mathf.Max(
+            0f,
+            Mathf.Min(newMinimumFireDestroyDelay, newMaximumFireDestroyDelay));
+        maximumFireDestroyDelay = Mathf.Max(
+            minimumFireDestroyDelay,
+            newMaximumFireDestroyDelay);
+        wetColor = newWetColor;
+        minimumWetRestoreDelay = Mathf.Max(
+            0f,
+            Mathf.Min(newMinimumWetRestoreDelay, newMaximumWetRestoreDelay));
+        maximumWetRestoreDelay = Mathf.Max(
+            minimumWetRestoreDelay,
+            newMaximumWetRestoreDelay);
+    }
+
     private void Update()
     {
-        if (!isConfigured || isWaiting || wasHitByCar)
+        if (!isConfigured || wasHitByCar)
+        {
+            return;
+        }
+
+        bool isRaining = IsRainActiveInSameEnvironment();
+        if (isRaining)
+        {
+            ApplyWetState();
+        }
+        else if (wetTintActive && wetRestoreCoroutine == null)
+        {
+            wetRestoreCoroutine = StartCoroutine(RestoreNormalColorAfterRain());
+        }
+
+        if (!isRaining && !firePanicStarted && IsFireActiveInSameEnvironment())
+        {
+            StartFirePanic();
+        }
+
+        if (isWaiting)
         {
             return;
         }
@@ -255,5 +342,215 @@ public class CityPersonWander : MonoBehaviour
         body.AddTorque(Random.insideUnitSphere * carHitTorque, ForceMode.Impulse);
 
         Destroy(gameObject, hitPersonDestroyDelay);
+    }
+
+    private bool IsFireActiveInSameEnvironment()
+    {
+        return IsAnyEnvironmentObjectActive(fireObjects);
+    }
+
+    private bool IsRainActiveInSameEnvironment()
+    {
+        return IsAnyEnvironmentObjectActive(rainObjects) ||
+               IsAnyEnvironmentObjectActive(stormObjects);
+    }
+
+    private void StartFirePanic()
+    {
+        if (wetRestoreCoroutine != null)
+        {
+            StopCoroutine(wetRestoreCoroutine);
+            wetRestoreCoroutine = null;
+        }
+
+        wetTintActive = false;
+        firePanicStarted = true;
+        movementSpeed = baseMovementSpeed * fireMovementMultiplier;
+
+        if (agent != null && agent.enabled)
+        {
+            agent.speed = movementSpeed;
+        }
+
+        if (isWaiting)
+        {
+            StopAllCoroutines();
+            isWaiting = false;
+        }
+
+        SetNewDestination();
+        ApplyTint(Color.red);
+        fireDestroyCoroutine = StartCoroutine(DestroyAfterFireDelay());
+    }
+
+    private void StopFirePanic()
+    {
+        if (!firePanicStarted)
+        {
+            return;
+        }
+
+        firePanicStarted = false;
+        movementSpeed = baseMovementSpeed;
+
+        if (agent != null && agent.enabled)
+        {
+            agent.speed = movementSpeed;
+        }
+
+        if (fireDestroyCoroutine != null)
+        {
+            StopCoroutine(fireDestroyCoroutine);
+            fireDestroyCoroutine = null;
+        }
+    }
+
+    private void ApplyWetState()
+    {
+        StopFirePanic();
+
+        if (wetRestoreCoroutine != null)
+        {
+            StopCoroutine(wetRestoreCoroutine);
+            wetRestoreCoroutine = null;
+        }
+
+        if (wetTintActive)
+        {
+            return;
+        }
+
+        wetTintActive = true;
+        ApplyTint(wetColor);
+    }
+
+    private IEnumerator DestroyAfterFireDelay()
+    {
+        float destroyDelay = Random.Range(
+            minimumFireDestroyDelay,
+            maximumFireDestroyDelay);
+        if (destroyDelay > 0f)
+        {
+            yield return new WaitForSeconds(destroyDelay);
+        }
+
+        Destroy(gameObject);
+    }
+
+    private IEnumerator RestoreNormalColorAfterRain()
+    {
+        float restoreDelay = Random.Range(
+            minimumWetRestoreDelay,
+            maximumWetRestoreDelay);
+        if (restoreDelay > 0f)
+        {
+            yield return new WaitForSeconds(restoreDelay);
+        }
+
+        wetTintActive = false;
+        wetRestoreCoroutine = null;
+
+        if (!firePanicStarted)
+        {
+            RestoreOriginalTint();
+        }
+    }
+
+    private bool IsAnyEnvironmentObjectActive(GameObject[] environmentObjects)
+    {
+        if (environmentObjects == null || environmentObjects.Length == 0)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < environmentObjects.Length; i++)
+        {
+            GameObject environmentObject = environmentObjects[i];
+            if (environmentObject == null || !environmentObject.activeInHierarchy)
+            {
+                continue;
+            }
+
+            if (environmentRoot != null &&
+                !IsTransformInsideRoot(environmentObject.transform, environmentRoot))
+            {
+                continue;
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+    private void ApplyTint(Color tintColor)
+    {
+        CacheOriginalRendererTintStates();
+
+        Renderer[] renderers = GetComponentsInChildren<Renderer>();
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            Renderer meshRenderer = renderers[i];
+            if (meshRenderer == null)
+            {
+                continue;
+            }
+
+            MaterialPropertyBlock propertyBlock = new MaterialPropertyBlock();
+            meshRenderer.GetPropertyBlock(propertyBlock);
+            propertyBlock.SetColor(BaseColorProperty, tintColor);
+            propertyBlock.SetColor(ColorProperty, tintColor);
+            meshRenderer.SetPropertyBlock(propertyBlock);
+        }
+    }
+
+    private void RestoreOriginalTint()
+    {
+        if (originalRendererTintStates == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < originalRendererTintStates.Length; i++)
+        {
+            RendererTintState rendererTintState = originalRendererTintStates[i];
+            if (rendererTintState.Renderer == null)
+            {
+                continue;
+            }
+
+            rendererTintState.Renderer.SetPropertyBlock(
+                rendererTintState.PropertyBlock);
+        }
+    }
+
+    private void CacheOriginalRendererTintStates()
+    {
+        if (originalRendererTintStates != null)
+        {
+            return;
+        }
+
+        Renderer[] renderers = GetComponentsInChildren<Renderer>();
+        originalRendererTintStates = new RendererTintState[renderers.Length];
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            MaterialPropertyBlock propertyBlock = new MaterialPropertyBlock();
+            if (renderers[i] != null)
+            {
+                renderers[i].GetPropertyBlock(propertyBlock);
+            }
+
+            originalRendererTintStates[i] = new RendererTintState
+            {
+                Renderer = renderers[i],
+                PropertyBlock = propertyBlock
+            };
+        }
+    }
+
+    private static bool IsTransformInsideRoot(Transform target, Transform root)
+    {
+        return target == root || target.IsChildOf(root);
     }
 }

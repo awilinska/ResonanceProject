@@ -12,6 +12,13 @@ public class CityLightSequenceController : MonoBehaviour
     [SerializeField] private bool turnAllLightsOffOnStart = true;
     [SerializeField, Min(0f)] private float delayBetweenLights = 0.1f;
 
+    [Header("Input")]
+#if ENABLE_INPUT_SYSTEM
+    [SerializeField] private Key sequenceKey = Key.L;
+#elif ENABLE_LEGACY_INPUT_MANAGER
+    [SerializeField] private KeyCode sequenceKey = KeyCode.L;
+#endif
+
     private bool lightsAreOn;
     private bool sequenceIsRunning;
 
@@ -29,7 +36,7 @@ public class CityLightSequenceController : MonoBehaviour
 
     private void Update()
     {
-        if (WasLightSequencePressed())
+        if (WasLightSequenceKeyPressed())
         {
             PlayLightSequence();
         }
@@ -109,13 +116,15 @@ public class CityLightSequenceController : MonoBehaviour
         return foundAssignedLight;
     }
 
-    private static bool WasLightSequencePressed()
+    private bool WasLightSequenceKeyPressed()
     {
 #if ENABLE_INPUT_SYSTEM
         Keyboard keyboard = Keyboard.current;
-        return keyboard != null && keyboard.lKey.wasPressedThisFrame;
+        return keyboard != null &&
+               sequenceKey != Key.None &&
+               keyboard[sequenceKey].wasPressedThisFrame;
 #elif ENABLE_LEGACY_INPUT_MANAGER
-        return Input.GetKeyDown(KeyCode.L);
+        return sequenceKey != KeyCode.None && Input.GetKeyDown(sequenceKey);
 #else
         return false;
 #endif
