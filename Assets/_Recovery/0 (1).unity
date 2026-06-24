@@ -23232,141 +23232,144 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ControllerKeyboardBinder
   bindings:
-  - label: Fire1
+  - label: 1
     keyboardKey: 102
-    controlPath: /DualShock4GamepadHID/dpad/left
-    deviceContains: Wireless controller
-    controlContains: left
-  - label: Fire2
-    keyboardKey: 111
-    controlPath: /DualShock4GamepadHID/dpad/up
-    deviceContains: Wireless controller
-    controlContains: up
-  - label: Fire3
-    keyboardKey: 104
-    controlPath: /DualShock4GamepadHID/dpad/right
-    deviceContains: Wireless controller
-    controlContains: right
-  - label: Fog1
-    keyboardKey: 103
-    controlPath: /44F B696/hat/left
-    deviceContains: B696
-    controlContains: left
-  - label: Fog2
-    keyboardKey: 105
-    controlPath: /44F B696/hat/up
-    deviceContains: B696
-    controlContains: up
-  - label: Fog3
-    keyboardKey: 106
-    controlPath: /44F B696/hat/right
-    deviceContains: B696
-    controlContains: right
-  - label: Rain1
-    keyboardKey: 114
-    controlPath: /DualShock4GamepadHID/buttonWest
-    deviceContains: Wireless controller
-    controlContains: buttonWest
-  - label: Rain2
-    keyboardKey: 117
-    controlPath: /DualShock4GamepadHID/buttonNorth
-    deviceContains: Wireless controller
-    controlContains: buttonNorth
-  - label: Rain3
-    keyboardKey: 107
-    controlPath: /DualShock4GamepadHID/buttonEast
-    deviceContains: Wireless controller
-    controlContains: buttonEast
-  - label: Storm1
-    keyboardKey: 115
-    controlPath: /DualShock4GamepadHID/dpad/down
-    deviceContains: Wireless controller
-    controlContains: down
-  - label: Storm3
-    keyboardKey: 121
-    controlPath: /DualShock4GamepadHID/buttonSouth
-    deviceContains: Wireless controller
-    controlContains: buttonSouth
-  - label: Wind1
-    keyboardKey: 119
-    controlPath: /44F B696/button4
-    deviceContains: B696
-    controlContains: button4
-  - label: Wind3
-    keyboardKey: 120
-    controlPath: /44F B696/button5
-    deviceContains: B696
-    controlContains: button5
-  - label: Birds1
-    keyboardKey: 98
-    controlPath: /DragonRise Inc.   Generic   USB  Joystick  /button5
-    deviceContains: 'Generic   USB  Joystick  '
-    controlContains: button5
-  - label: Lights2
-    keyboardKey: 108
-    controlPath: /44F B696/hat/down
-    deviceContains: B696
-    controlContains: down
-  - label: Lights3
-    keyboardKey: 113
-    controlPath: /44F B696/button6
-    deviceContains: B696
-    controlContains: button6
-  - label: People2
-    keyboardKey: 112
-    controlPath: /DragonRise Inc.   Generic   USB  Joystick  /button3
-    deviceContains: 'Generic   USB  Joystick  '
-    controlContains: button3
-  - label: People3
-    keyboardKey: 122
-    controlPath: /DragonRise Inc.   Generic   USB  Joystick  /button4
-    deviceContains: 'Generic   USB  Joystick  '
-    controlContains: button4
-  - label: Cars2-1
-    keyboardKey: 110
-    controlPath: /44F B696/button10
-    deviceContains: B696
-    controlContains: button10
-  - label: Cars2-2
-    keyboardKey: 109
-    controlPath: /44F B696/button9
-    deviceContains: B696
-    controlContains: button9
-  - label: Cars3-1
-    keyboardKey: 99
-    controlPath: /44F B696/button11
-    deviceContains: B696
-    controlContains: button11
-  - label: Cars3-2
-    keyboardKey: 118
-    controlPath: /44F B696/button12
-    deviceContains: B696
-    controlContains: button12
-  - label: Wolves1
-    keyboardKey: 97
     controlPath: /DragonRise Inc.   Generic   USB  Joystick  /trigger
     deviceContains: 'Generic   USB  Joystick  '
     controlContains: trigger
-  - label: Wolves3
-    keyboardKey: 100
+  - label: 2
+    keyboardKey: 121
     controlPath: /DragonRise Inc.   Generic   USB  Joystick  /button2
     deviceContains: 'Generic   USB  Joystick  '
     controlContains: button2
-  - label: CameraLeft
+  - label: 3
+    keyboardKey: 107
+    controlPath: /DragonRise Inc.   Generic   USB  Joystick  /button3
+    deviceContains: 'Generic   USB  Joystick  '
+    controlContains: button3
+  - label: 4
+    keyboardKey: 113
+    controlPath: /DragonRise Inc.   Generic   USB  Joystick  /button4
+    deviceContains: 'Generic   USB  Joystick  '
+    controlContains: button4
+  - label: 5
+    keyboardKey: 99
+    controlPath: /DualShock4GamepadHID/buttonEast
+    deviceContains: Wireless controller
+    controlContains: buttonEast
+  - label: 6
+    keyboardKey: 119
+    controlPath: /DualShock4GamepadHID/dpad/up
+    deviceContains: Wireless controller
+    controlContains: up
+  - label: 7
+    keyboardKey: 98
+    controlPath: /DualShock4GamepadHID/dpad/right
+    deviceContains: Wireless controller
+    controlContains: right
+  - label: 8
+    keyboardKey: 103
+    controlPath: /DualShock4GamepadHID/dpad/down
+    deviceContains: Wireless controller
+    controlContains: down
+  - label: 9
+    keyboardKey: 109
+    controlPath: /DualShock4GamepadHID/dpad/left
+    deviceContains: Wireless controller
+    controlContains: left
+  - label: 10
+    keyboardKey: 112
+    controlPath: /DualShock4GamepadHID/buttonSouth
+    deviceContains: Wireless controller
+    controlContains: buttonSouth
+  - label: 11
+    keyboardKey: 97
+    controlPath: /DualShock4GamepadHID/buttonNorth
+    deviceContains: Wireless controller
+    controlContains: buttonNorth
+  - label: 12
+    keyboardKey: 118
+    controlPath: /DualShock4GamepadHID/buttonWest
+    deviceContains: Wireless controller
+    controlContains: buttonWest
+  - label: 13
+    keyboardKey: 115
+    controlPath: /DragonRise Inc.   Generic   USB  Joystick  /button5
+    deviceContains: 'Generic   USB  Joystick  '
+    controlContains: button5
+  - label: 14
     keyboardKey: 276
     controlPath: /44F B696/trigger
     deviceContains: B696
     controlContains: trigger
-  - label: CameraRight
+  - label: 15
     keyboardKey: 275
     controlPath: /44F B696/button2
     deviceContains: B696
     controlContains: button2
-  logPressedControls: 0
+  - label: 16
+    keyboardKey: 117
+    controlPath: /44F B696/hat/up
+    deviceContains: B696
+    controlContains: up
+  - label: 17
+    keyboardKey: 100
+    controlPath: /44F B696/hat/right
+    deviceContains: B696
+    controlContains: right
+  - label: 18
+    keyboardKey: 108
+    controlPath: /44F B696/hat/down
+    deviceContains: B696
+    controlContains: down
+  - label: 19
+    keyboardKey: 120
+    controlPath: /44F B696/hat/left
+    deviceContains: B696
+    controlContains: left
+  - label: 20
+    keyboardKey: 110
+    controlPath: /44F B696/button10
+    deviceContains: B696
+    controlContains: button10
+  - label: 21
+    keyboardKey: 122
+    controlPath: /44F B696/button9
+    deviceContains: B696
+    controlContains: button9
+  - label: 22
+    keyboardKey: 108
+    controlPath: /44F B696/button3
+    deviceContains: B696
+    controlContains: button3
+  - label: 23
+    keyboardKey: 114
+    controlPath: /44F B696/button6
+    deviceContains: B696
+    controlContains: button6
+  - label: 24
+    keyboardKey: 105
+    controlPath: /44F B696/button5
+    deviceContains: B696
+    controlContains: button5
+  - label: 25
+    keyboardKey: 106
+    controlPath: /44F B696/button4
+    deviceContains: B696
+    controlContains: button4
+  - label: 26
+    keyboardKey: 111
+    controlPath: /44F B696/button11
+    deviceContains: B696
+    controlContains: button11
+  - label: 27
+    keyboardKey: 104
+    controlPath: /44F B696/button12
+    deviceContains: B696
+    controlContains: button12
+  logPressedControls: 1
   logOnlyOncePerControl: 1
   pressPoint: 0.5
-  startupSettleSeconds: 0.75
-  releaseArmSeconds: 0.25
 --- !u!4 &119476103
 Transform:
   m_ObjectHideFlags: 0
@@ -46353,7 +46356,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &286727224
 Transform:
   m_ObjectHideFlags: 0
@@ -65439,43 +65442,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 1030977564, guid: abc00000000007214255742209680909, type: 3}
   m_PrefabInstance: {fileID: 393305214}
   m_PrefabAsset: {fileID: 0}
---- !u!84 &393797203
-RenderTexture:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: 
-  m_ImageContentsHash:
-    serializedVersion: 2
-    Hash: 00000000000000000000000000000000
-  m_IsAlphaChannelOptional: 0
-  serializedVersion: 6
-  m_Width: 128
-  m_Height: 128
-  m_AntiAliasing: 1
-  m_MipCount: -1
-  m_DepthStencilFormat: 94
-  m_ColorFormat: 48
-  m_MipMap: 1
-  m_GenerateMips: 1
-  m_SRGB: 0
-  m_UseDynamicScale: 0
-  m_UseDynamicScaleExplicit: 0
-  m_BindMS: 0
-  m_EnableCompatibleFormat: 1
-  m_EnableRandomWrite: 0
-  m_TextureSettings:
-    serializedVersion: 2
-    m_FilterMode: 1
-    m_Aniso: 1
-    m_MipBias: 0
-    m_WrapU: 1
-    m_WrapV: 1
-    m_WrapW: 1
-  m_Dimension: 2
-  m_VolumeDepth: 1
-  m_ShadowSamplingMode: 2
 --- !u!1001 &393888546
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -72705,43 +72671,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 1030972144, guid: 2c729a5c7f5c8fa43a12637f2e87af8a, type: 3}
   m_PrefabInstance: {fileID: 442717922}
   m_PrefabAsset: {fileID: 0}
---- !u!84 &442942904
-RenderTexture:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: 
-  m_ImageContentsHash:
-    serializedVersion: 2
-    Hash: 00000000000000000000000000000000
-  m_IsAlphaChannelOptional: 0
-  serializedVersion: 6
-  m_Width: 128
-  m_Height: 128
-  m_AntiAliasing: 1
-  m_MipCount: -1
-  m_DepthStencilFormat: 94
-  m_ColorFormat: 48
-  m_MipMap: 1
-  m_GenerateMips: 1
-  m_SRGB: 0
-  m_UseDynamicScale: 0
-  m_UseDynamicScaleExplicit: 0
-  m_BindMS: 0
-  m_EnableCompatibleFormat: 1
-  m_EnableRandomWrite: 0
-  m_TextureSettings:
-    serializedVersion: 2
-    m_FilterMode: 1
-    m_Aniso: 1
-    m_MipBias: 0
-    m_WrapU: 1
-    m_WrapV: 1
-    m_WrapW: 1
-  m_Dimension: 2
-  m_VolumeDepth: 1
-  m_ShadowSamplingMode: 2
 --- !u!1001 &442945093
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -112499,7 +112428,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &735414508
 Transform:
   m_ObjectHideFlags: 0
@@ -159686,7 +159615,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1011476351
 Transform:
   m_ObjectHideFlags: 0
@@ -184387,7 +184316,7 @@ MonoBehaviour:
     fireKey: 22
     fogKey: 24
     rainKey: 25
-    stormKey: 39
+    stormKey: 26
     windKey: 38
   - label: Environment 3 - City
     environmentRoot: {fileID: 1637302799}
@@ -184400,9 +184329,8 @@ MonoBehaviour:
     fireKey: 29
     fogKey: 23
     rainKey: 35
-    stormKey: 14
+    stormKey: 39
     windKey: 6
-  turnAllTargetsOffOnStart: 1
 --- !u!114 &1164814054
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -204435,7 +204363,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1309935155
 Transform:
   m_ObjectHideFlags: 0
@@ -231111,7 +231039,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1442819703
 Transform:
   m_ObjectHideFlags: 0
@@ -300829,7 +300757,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1840241279
 Transform:
   m_ObjectHideFlags: 0
@@ -368486,7 +368414,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!1 &6294214567957070385
 GameObject:
   m_ObjectHideFlags: 0

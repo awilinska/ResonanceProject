@@ -119,12 +119,9 @@ public class CityLightSequenceController : MonoBehaviour
     private bool WasLightSequenceKeyPressed()
     {
 #if ENABLE_INPUT_SYSTEM
-        Keyboard keyboard = Keyboard.current;
-        return keyboard != null &&
-               sequenceKey != Key.None &&
-               keyboard[sequenceKey].wasPressedThisFrame;
+        return sequenceKey != Key.None && ControllerKeyboardBinder.GetKeyDown(sequenceKey);
 #elif ENABLE_LEGACY_INPUT_MANAGER
-        return sequenceKey != KeyCode.None && Input.GetKeyDown(sequenceKey);
+        return sequenceKey != KeyCode.None && ControllerKeyboardBinder.GetKeyDown(sequenceKey);
 #else
         return false;
 #endif

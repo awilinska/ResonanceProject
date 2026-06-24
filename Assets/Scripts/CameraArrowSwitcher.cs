@@ -201,25 +201,11 @@ public class CameraArrowSwitcher : MonoBehaviour
 
     private static bool WasRightArrowPressed()
     {
-#if ENABLE_INPUT_SYSTEM
-        Keyboard keyboard = Keyboard.current;
-        return keyboard != null && keyboard.rightArrowKey.wasPressedThisFrame;
-#elif ENABLE_LEGACY_INPUT_MANAGER
-        return Input.GetKeyDown(KeyCode.RightArrow);
-#else
-        return false;
-#endif
+        return ControllerKeyboardBinder.GetKeyDown(KeyCode.RightArrow);
     }
 
     private static bool WasLeftArrowPressed()
     {
-#if ENABLE_INPUT_SYSTEM
-        Keyboard keyboard = Keyboard.current;
-        return keyboard != null && keyboard.leftArrowKey.wasPressedThisFrame;
-#elif ENABLE_LEGACY_INPUT_MANAGER
-        return Input.GetKeyDown(KeyCode.LeftArrow);
-#else
-        return false;
-#endif
+        return ControllerKeyboardBinder.GetKeyDown(KeyCode.LeftArrow);
     }
 }

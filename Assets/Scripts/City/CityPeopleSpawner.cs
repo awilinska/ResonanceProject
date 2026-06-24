@@ -293,12 +293,9 @@ public class CityPeopleSpawner : MonoBehaviour
     private bool WasSpawnKeyPressed()
     {
 #if ENABLE_INPUT_SYSTEM
-        Keyboard keyboard = Keyboard.current;
-        return keyboard != null &&
-               spawnKey != Key.None &&
-               keyboard[spawnKey].wasPressedThisFrame;
+        return spawnKey != Key.None && ControllerKeyboardBinder.GetKeyDown(spawnKey);
 #elif ENABLE_LEGACY_INPUT_MANAGER
-        return spawnKey != KeyCode.None && Input.GetKeyDown(spawnKey);
+        return spawnKey != KeyCode.None && ControllerKeyboardBinder.GetKeyDown(spawnKey);
 #else
         return false;
 #endif

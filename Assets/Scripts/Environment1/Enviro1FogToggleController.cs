@@ -59,8 +59,16 @@ public class Enviro1FogToggleController : MonoBehaviour
     [Header("Additional Environments")]
     [SerializeField] private EnvironmentControls[] additionalEnvironments;
 
+    [Header("Startup")]
+    [SerializeField] private bool turnAllTargetsOffOnStart = true;
+
     private void Start()
     {
+        if (turnAllTargetsOffOnStart)
+        {
+            SetEnvironmentActive(fireObject, fogObject, rainObject, new[] { lightningObject }, windObject, false);
+        }
+
         ValidateEnvironment("Environment 1", fireObject, fogObject, rainObject, new[] { lightningObject }, windObject);
 
         if (additionalEnvironments == null)
@@ -78,6 +86,18 @@ public class Enviro1FogToggleController : MonoBehaviour
 
             ResolveMissingTargets(controls);
             CreateMissingTargetsFromEnvironment1(controls);
+
+            if (turnAllTargetsOffOnStart)
+            {
+                SetEnvironmentActive(
+                    controls.fireObject,
+                    controls.fogObject,
+                    controls.rainObject,
+                    controls.stormObjects,
+                    controls.windObject,
+                    false);
+            }
+
             ValidateEnvironment(controls.label, controls.fireObject, controls.fogObject, controls.rainObject, controls.stormObjects, controls.windObject);
         }
     }
@@ -251,6 +271,37 @@ public class Enviro1FogToggleController : MonoBehaviour
         }
     }
 
+    private static void SetEnvironmentActive(
+        GameObject fireTarget,
+        GameObject fogTarget,
+        GameObject rainTarget,
+        GameObject[] stormTargets,
+        GameObject windTarget,
+        bool active)
+    {
+        if (fireTarget != null)
+        {
+            fireTarget.SetActive(active);
+        }
+
+        if (fogTarget != null)
+        {
+            fogTarget.SetActive(active);
+        }
+
+        if (rainTarget != null)
+        {
+            rainTarget.SetActive(active);
+        }
+
+        SetAllActive(stormTargets, active);
+
+        if (windTarget != null)
+        {
+            windTarget.SetActive(active);
+        }
+    }
+
     private static void ValidateEnvironment(
         string label,
         GameObject fireTarget,
@@ -379,15 +430,12 @@ public class Enviro1FogToggleController : MonoBehaviour
 #if ENABLE_INPUT_SYSTEM
     private static bool WasKeyPressed(Key key)
     {
-        Keyboard keyboard = Keyboard.current;
-        return keyboard != null &&
-               key != Key.None &&
-               keyboard[key].wasPressedThisFrame;
+        return key != Key.None && ControllerKeyboardBinder.GetKeyDown(key);
     }
 #elif ENABLE_LEGACY_INPUT_MANAGER
     private static bool WasKeyPressed(KeyCode key)
     {
-        return key != KeyCode.None && Input.GetKeyDown(key);
+        return key != KeyCode.None && ControllerKeyboardBinder.GetKeyDown(key);
     }
 #else
     private static bool WasKeyPressed(int key)

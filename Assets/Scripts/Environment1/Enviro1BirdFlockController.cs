@@ -206,13 +206,6 @@ public class Enviro1BirdFlockController : MonoBehaviour
 
     private static bool WasSpawnPressed()
     {
-#if ENABLE_INPUT_SYSTEM
-        Keyboard keyboard = Keyboard.current;
-        return keyboard != null && keyboard.bKey.wasPressedThisFrame;
-#elif ENABLE_LEGACY_INPUT_MANAGER
-        return Input.GetKeyDown(KeyCode.B);
-#else
-        return false;
-#endif
+        return ControllerKeyboardBinder.GetKeyDown(KeyCode.B);
     }
 }
